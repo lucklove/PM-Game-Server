@@ -6,8 +6,6 @@ int main()
 {
     crow::SimpleApp app;
 
-    Battle::route(app);
-    
     CROW_ROUTE(app, "/")([]
     {
         return std::to_string(Random::get(0.0, 1.0));
