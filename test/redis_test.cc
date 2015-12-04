@@ -1,6 +1,6 @@
 #include "UnitTest.hh"
-#include "ScopeGuard.hh"
-#include "AsyncWrapper.hh"
+#include "utils/ScopeGuard.hh"
+#include "utils/AsyncWrapper.hh"
 #include <redox.hpp>
 
 TEST_CASE(redis_sync_read_write)

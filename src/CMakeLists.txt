@@ -4,4 +4,4 @@ SET(POCKET_MONSTER_SRCS
 
 INCLUDE_DIRECTORIES(../inc)
 ADD_EXECUTABLE(pocket_monster ${POCKET_MONSTER_SRCS})
-TARGET_LINK_LIBRARIES(pocket_monster boost_system)
+TARGET_LINK_LIBRARIES(pocket_monster boost_system pthread)

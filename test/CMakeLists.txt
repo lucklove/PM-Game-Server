@@ -1,5 +1,6 @@
 SET(TEST_SOURCES
 	test.cc
+    combination.cc
 )
 
 SET(REDIS_TEST_SOURCES
