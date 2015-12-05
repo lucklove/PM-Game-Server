@@ -3,6 +3,7 @@ SET(TEST_SOURCES
     combination.cc
     battle.cc
     storage.cc
+    aioi_db.cc
 )
 
 SET(REDIS_TEST_SOURCES

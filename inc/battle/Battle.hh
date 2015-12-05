@@ -31,7 +31,7 @@ public:
         return {}; 
     }
 
-    int id()
+    int id() const
     {
         return id_;
     }

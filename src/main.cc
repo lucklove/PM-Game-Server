@@ -1,15 +1,31 @@
 #include "crow/crow.h"
-#include "utils/Random.hh"
-#include "battle/Battle.hh"
+#include "storage/BattleDB.hh"
 
 int main()
 {
     crow::SimpleApp app;
 
-    CROW_ROUTE(app, "/")([]
+    CROW_ROUTE(app, "/battle/<int>/<int>")([](int p_pm_id, int s_pm_id)
     {
-        return std::to_string(Random::get(0.0, 1.0));
+        crow::json::wvalue result;
+        auto battle_opt = Battle::launch(p_pm_id, s_pm_id);
+        if(!battle_opt)
+        {
+            result["result"] = "false";
+            result["error"] = "invalid pm id";
+        }
+        else
+        {
+            const Battle& b = *battle_opt;
+            result["result"] = "true";
+            result["battle_id"] = std::to_string(b.id());
+            BattleDB::set(b.id(), b);
+        }
+        return result;
     });
-    
+
+    MonsterDB::set(1, Monster());
+    MonsterDB::set(2, Monster());
+
     app.port(8080).multithreaded().run();
 }
