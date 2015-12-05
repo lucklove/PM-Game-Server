@@ -1,6 +1,8 @@
 SET(TEST_SOURCES
 	test.cc
     combination.cc
+    battle.cc
+    storage.cc
 )
 
 SET(REDIS_TEST_SOURCES
