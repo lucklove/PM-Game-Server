@@ -1,0 +1,42 @@
+<component name="libraryTable">
+  <library name="GOPATH &lt;pm_data_import_tools&gt;">
+    <CLASSES>
+      <root url="file://$USER_HOME$/gocode/src/lib" />
+      <root url="file://$USER_HOME$/gocode/src/eleme" />
+      <root url="file://$USER_HOME$/gocode/src/Web" />
+      <root url="file://$USER_HOME$/gocode/src/test" />
+      <root url="file://$USER_HOME$/gocode/src/.DS_Store" />
+      <root url="file://$USER_HOME$/gocode/src/meeting" />
+      <root url="file://$USER_HOME$/gocode/src/beego" />
+      <root url="file://$USER_HOME$/gocode/src/github.com" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+    <excluded>
+      <root url="file://$USER_HOME$/gocode/src/github.com/ele828/go-blog/.idea" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/beego/bee/testdata" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/jtolds/gls/.git" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/julienschmidt/httprouter/.git" />
+      <root url="file://$PROJECT_DIR$" />
+      <root url="file://$USER_HOME$/gocode/src/eleme/.idea" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/tealeg/xlsx/.git" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/smartystreets/goconvey/.git" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/garyburd/redigo/.git" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/martini-contrib/render/.git" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/astaxie/beego/utils/testdata" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/smartystreets/assertions/.git" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/oxtoacart/bpool/.git" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/beego/bee/.git" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/ele828/algorithm/.idea" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/codegangsta/inject/.git" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/shiena/ansicolor/.git" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/pquerna/ffjson/.git" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/howeyc/fsnotify/.git" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/lib/pq/.git" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/go-sql-driver/mysql/.git" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/go-martini/martini/.git" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/fatih/color/.git" />
+      <root url="file://$USER_HOME$/gocode/src/github.com/astaxie/beego/.git" />
+    </excluded>
+  </library>
+</component>
