@@ -139,7 +139,6 @@ int main()
         UnitTest::getInstance().printLastCheckedPoint();
         report_and_exit();
     });
-
     UnitTest::getInstance().runAll();    
     report_and_exit();    
 }

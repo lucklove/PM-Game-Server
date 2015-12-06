@@ -4,14 +4,16 @@ SET(TEST_SOURCES
     battle.cc
     storage.cc
     aioi_db.cc
+    cereal.cc
 )
 
 SET(REDIS_TEST_SOURCES
 	test.cc
     redis_test.cc
+    monster_secondary_storage.cc
 )
 
-INCLUDE_DIRECTORIES(../inc)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/inc ${CMAKE_SOURCE_DIR}/3rdparty/inc)
 LINK_DIRECTORIES(/usr/local/lib64)
 
 ADD_EXECUTABLE(pocket_monster_test ${TEST_SOURCES})

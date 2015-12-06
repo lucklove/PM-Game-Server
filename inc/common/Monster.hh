@@ -1,9 +1,8 @@
 #pragma once
 #include <memory>
 #include <string>
-#include "utils/Random.hh"
 
-struct MonsterProperty
+struct Monster
 {
     int pm_ID;              /**< 精灵ID */
     std::string pm_Name;    /**< 精灵名称 */
@@ -45,57 +44,15 @@ struct MonsterProperty
     int pm_CurSatk;         /**< 最终特攻 */
     int pm_CurSdef;         /**< 最终特防 */
     int pm_CurSpd;          /**< 最终速度 */
-    
+   
+    int pm_Skill1; 
+    int pm_Skill2; 
+    int pm_Skill3; 
+    int pm_Skill4; 
+
     int pm_Ability;         /**< 特性ID，影响计算参数 */
 };
-
-class Monster
-{
-private:
-    MonsterProperty property_;
-
-public:
 /*
-    Monster(int ID, int LV, int BS_HP, int BS_ATK, int BS_DEF, int BS_SATK, int BS_SDEF, int BS_SPD,
-        int EV_HP, int EV_ATK, int EV_DEF, int EV_SATK, int EV_SDEF, int EV_SPD) 
-    {
-        property_.pm_ID = ID;
-        property_.pm_Level = LV;
-
-        property_.pm_BS_Atk = BS_ATK;
-        property_.pm_BS_Def = BS_DEF;
-        property_.pm_BS_Satk = BS_SATK;
-        property_.pm_BS_Sdef = BS_SDEF;
-        property_.pm_BS_Spd = BS_SPD;
-
-        property_.pm_EV_Atk = EV_ATK;
-        property_.pm_EV_Def = EV_DEF;
-        property_.pm_EV_Satk = EV_SATK;
-        property_.pm_EV_Sdef = EV_SDEF;
-        property_.pm_EV_Spd = EV_SPD;
-
-        property_.pm_CurHp = LV * BS_HP / 50 + EV_HP / 4 + 10 + LV;   
-        property_.pm_CurAtk = LV * BS_ATK / 50 + EV_ATK / 4 + 5;   
-        property_.pm_CurDef = LV * BS_DEF / 50 + EV_DEF / 4 + 5;   
-        property_.pm_CurSatk = LV * BS_SATK / 50 + EV_SATK / 4 + 5;   
-        property_.pm_CurSdef = LV * BS_SDEF / 50 + EV_SDEF / 4 + 5;   
-        property_.pm_CurSpd = LV * BS_SPD / 50 + EV_SPD / 4 + 5;   
-    
-        property_.pm_AtkLv = 0;
-        property_.pm_DefLv = 0;
-        property_.pm_SatkLv = 0;
-        property_.pm_SdefLv = 0;
-        property_.pm_CurSdef = 0;
-        property_.pm_CritLv = 0;
-    }
-
-    Monster(const Monster&) = default;
-*/
-    int id()
-    {
-        return property_.pm_ID;
-    }
-
     float attack(const Monster& enemy, int skill_Power, int mod_SkillPower, 
         int skillType, int isPhysicalSkill, int isCrit, int critMulti)
     {
@@ -112,4 +69,4 @@ public:
         property_.pm_CurHp -= hurt;
         return property_.pm_CurHp;       
     }
-};
+*/
