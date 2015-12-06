@@ -1,7 +1,7 @@
 #pragma once
 #include "Storage.hh"
 
-struct PrimaryAioiStorage
+struct AioiMemoryStorage
 {
     static Optional<float> get(int att, int def)
     {
@@ -39,4 +39,4 @@ struct PrimaryAioiStorage
     }        
 };
 
-using AioiDB = Storage<PrimaryAioiStorage>;
+using AioiDB = Storage<AioiMemoryStorage>;

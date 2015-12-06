@@ -2,7 +2,7 @@
 #include "utils/Optional.hh"
 #include "utils/function_traits.hh"
 
-template <typename OptionalT>
+template <typename OptionalT, size_t = 0>
 struct NopStorage
 {
     template <typename... Args>
@@ -23,10 +23,10 @@ struct NopStorage
 };
 
 template <typename Primary, 
-    typename Secondary = NopStorage<typename function_traits<decltype(Primary::get)>::return_type>,
-    typename Tertiary = NopStorage<typename function_traits<decltype(Primary::get)>::return_type>
+    typename Secondary = NopStorage<typename function_traits<decltype(Primary::get)>::return_type, 1>,
+    typename Tertiary = NopStorage<typename function_traits<decltype(Primary::get)>::return_type, 2>
 >
-struct Storage
+struct Storage : Primary, Secondary, Tertiary
 {
     using primary_storage = Primary;
     using secondary_storage = Secondary;

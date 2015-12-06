@@ -1,6 +1,6 @@
 #include "UnitTest.hh"
 #include "cereal/cereal.hpp"
-#include "cereal/archives/binary.hpp"
+#include "cereal/archives/json.hpp"
 #include <string>
 
 struct MyRecord
@@ -18,15 +18,16 @@ struct MyRecord
 
 TEST_CASE(cereal_test)
 {
-/*
     std::stringstream ss;
     const MyRecord r{"Joshua", 20, "NEU"};
-    cereal::BinaryOutputArchive output(ss);
-    output(r);
-    std::cout << ss.str() << std::endl;
-    cereal::BinaryInputArchive iarchive(ss);
-*/
-//    MyRecord r2;
-//    iarchive(r2);
-          
+    {
+        cereal::JSONOutputArchive output(ss);
+        output(CEREAL_NVP(r));
+    }
+    cereal::JSONInputArchive iarchive(ss);
+    MyRecord r2;
+    iarchive(r2);
+    TEST_CHECK(r2.name == r.name);
+    TEST_CHECK(r2.age == r.age);
+    TEST_CHECK(r2.address == r.address);
 };

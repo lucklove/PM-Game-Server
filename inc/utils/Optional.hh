@@ -1,7 +1,7 @@
 #pragma once
 #include <type_traits>
 #include <utility>
-#include <exception>
+#include <stdexcept>
 
 template<typename T>
 class Optional

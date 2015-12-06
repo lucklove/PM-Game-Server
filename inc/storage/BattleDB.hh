@@ -3,7 +3,7 @@
 #include "Storage.hh"
 #include <unordered_map>
 
-struct PrimaryBattleStorage
+struct BattleMemoryStorage
 {
 private:
     static std::unordered_map<int, Battle>& static_storage()
@@ -36,4 +36,4 @@ public:
     }
 };
 
-using BattleDB = Storage<PrimaryBattleStorage>;
+using BattleDB = Storage<BattleMemoryStorage>;
