@@ -7,8 +7,8 @@ struct Battle
 {
     int id;                     /**< 战场id */
     int round;                  /**< 回合计数 */
-    Monster player_pm_;
-    Monster server_pm_;
+    Monster player_pm;
+    Monster server_pm;
 
     static int genUniqueBattleID()
     {
@@ -16,10 +16,10 @@ struct Battle
         return atomic_fetch_add(&id_counter_, 1);
     }
 
-    static Optional<Battle> launch(int player_pm, int server_pm)
+    static Optional<Battle> launch(int player_id, int server_id)
     {
-        auto player_pm_opt = MonsterDB::get(player_pm);
-        auto server_pm_opt = MonsterDB::get(server_pm);
+        auto player_pm_opt = MonsterDB::get(player_id);
+        auto server_pm_opt = MonsterDB::get(server_id);
         if(player_pm_opt && server_pm_opt)
             return Battle{genUniqueBattleID(), 1, *player_pm_opt, *server_pm_opt};
         return {}; 

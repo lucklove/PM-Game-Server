@@ -5,6 +5,7 @@ SET(TEST_SOURCES
     storage.cc
     aioi_db.cc
     cereal.cc
+    monster_memory_test.cc
 )
 
 SET(REDIS_TEST_SOURCES
@@ -16,6 +17,7 @@ SET(REDIS_TEST_SOURCES
 SET(MYSQL_TEST_SOURCES
 	test.cc
     monster_persistent_test.cc
+    skill_storage_test.cc
 )
 
 SET(LINK_LIBS

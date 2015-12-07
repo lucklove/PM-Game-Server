@@ -1,9 +1,9 @@
 #include "UnitTest.hh"
 #include "storage/MonsterDB.hh"
 
-TEST_CASE(secondary_storage)
+TEST_CASE(primary_storage)
 {
-    using DB = MonsterDB::secondary_storage;
+    using DB = MonsterDB::primary_storage;
     DB::del(11);
     TEST_CHECK(!DB::get(11));
     Monster m = { 

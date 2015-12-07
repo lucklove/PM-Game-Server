@@ -40,7 +40,7 @@ CREATE TABLE `monster` (
   `bs_sdef` int(8) NOT NULL DEFAULT '0',
   `bs_spd` int(8) NOT NULL DEFAULT '0',
   `ev_hp` int(8) NOT NULL DEFAULT '0',
-  `ev_htk` int(8) NOT NULL DEFAULT '0',
+  `ev_atk` int(8) NOT NULL DEFAULT '0',
   `ev_def` int(8) NOT NULL DEFAULT '0',
   `ev_satk` int(8) NOT NULL DEFAULT '0',
   `ev_sdef` int(8) NOT NULL DEFAULT '0',

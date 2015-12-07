@@ -8,5 +8,5 @@ INCLUDE_DIRECTORIES(
     /usr/include/mysql
 )
 LINK_DIRECTORIES(/usr/local/lib64)
-ADD_EXECUTABLE(pocket_monster ${POCKET_MONSTER_SRCS})
-TARGET_LINK_LIBRARIES(pocket_monster boost_system pthread redox ev hiredis soci_core soci_mysql)
+ADD_EXECUTABLE(pm_server ${POCKET_MONSTER_SRCS})
+TARGET_LINK_LIBRARIES(pm_server boost_system pthread redox ev hiredis soci_core soci_mysql)
