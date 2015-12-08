@@ -3,11 +3,18 @@
 #include "utils/ScopeGuard.hh"
 #include <redox.hpp>
 #include <unordered_map>
+#include <mutex>
 
 template <typename T>
 struct MemoryStorage
 {
 private:
+    static std::mutex& storage_lock()
+    {
+        static std::mutex lock;
+        return lock;
+    }
+
     static std::unordered_map<int, T>& static_storage()
     {
         static std::unordered_map<int, T> local_db;
@@ -18,6 +25,7 @@ public:
     static Optional<T> get(int id)
     {
         auto& db = static_storage();
+        std::lock_guard<std::mutex> lck(storage_lock());
         auto ptr = db.find(id);
         if(ptr == db.end())
             return {};
@@ -27,6 +35,7 @@ public:
     static void set(int id, const T& item)
     {
         auto& db = static_storage();
+        std::lock_guard<std::mutex> lck(storage_lock());
         db.erase(id);
         db.insert({id, item});
     }
@@ -34,6 +43,7 @@ public:
     static void del(int id)
     {
         auto& db = static_storage();
+        std::lock_guard<std::mutex> lck(storage_lock());
         db.erase(id);
     }
 };

@@ -33,92 +33,76 @@ static auto handle_attack(const crow::request& req, int battle_id)
     {
         result["result"] = false;
         result["error"] = "invalid battle id";
+        return crow::response{result};;
     }
-    else
+    auto s_opt = SkillDB::get(x["skill"].i());
+    if(!s_opt)
     {
-        auto s_opt = SkillDB::get(x["skill"].i());
-        if(!s_opt)
+        result["result"] = false;
+        result["error"] = "no such skill";
+        return crow::response{result};
+    }
+    auto& player = result["player"]; 
+    auto& server = result["server"]; 
+
+    auto do_attack = [](auto& res, Monster& m_a, Monster& m_b, Skill& s)
+    {
+        res["hit"] = true;
+        int crit = Attack::crit_multi(m_a);
+        res["crit"] = crit;
+        float dmg = Attack::attack(m_a, m_b, s, crit);
+        res["hurt"] = dmg;
+        m_b.cur_hp -= dmg;
+        res["hp"] = m_b.cur_hp;
+    };
+
+    if(Attack::is_first(battle_opt->player_pm, battle_opt->server_pm))
+    {
+        player["first"] = true;
+        server["first"] = false;
+
+        if(Attack::is_hit(battle_opt->player_pm, *s_opt))
         {
-            result["result"] = false;
-            result["error"] = "no such skill";
-            return crow::response{result};
-        }
-        auto& player = result["player"]; 
-        auto& server = result["server"]; 
-
-        if(Attack::is_first(battle_opt->player_pm, battle_opt->server_pm))
-        {
-            player["first"] = true;
-            server["first"] = false;
-
-            if(Attack::is_hit(battle_opt->player_pm, *s_opt))
-            {
-                server["hit"] = true;
-                int crit = Attack::crit_multi(battle_opt->player_pm);
-                server["crit"] = crit;
-                float dmg = Attack::attack(battle_opt->player_pm, battle_opt->server_pm, *s_opt, crit);
-                server["hurt"] = dmg;
-                battle_opt->server_pm.cur_hp -= dmg;
-                server["hp"] = battle_opt->server_pm.cur_hp;
-            }
-            else
-            {
-                server["hit"] = false;
-            }
-
-            if(Attack::is_hit(battle_opt->server_pm, *s_opt))
-            {
-                player["hit"] = true;
-                int crit = Attack::crit_multi(battle_opt->player_pm);
-                player["crit"] = crit;
-                float dmg = Attack::attack(battle_opt->server_pm, battle_opt->player_pm, *s_opt, crit);
-                player["hurt"] = dmg;
-                battle_opt->player_pm.cur_hp -= dmg;
-                player["hp"] = battle_opt->player_pm.cur_hp;
-            }
-            else
-            {
-                player["hit"] = false;
-            }
+            do_attack(server, battle_opt->player_pm, battle_opt->server_pm, *s_opt);
         }
         else
         {
-            player["first"] = false;
-            server["first"] = true;
-
-            if(Attack::is_hit(battle_opt->server_pm, *s_opt))
-            {
-                player["hit"] = true;
-                int crit = Attack::crit_multi(battle_opt->player_pm);
-                player["crit"] = crit;
-                float dmg = Attack::attack(battle_opt->server_pm, battle_opt->player_pm, *s_opt, crit);
-                player["hurt"] = dmg;
-                battle_opt->player_pm.cur_hp -= dmg;
-                player["hp"] = battle_opt->player_pm.cur_hp;
-            }
-            else
-            {
-                player["hit"] = false;
-            }
-
-            if(Attack::is_hit(battle_opt->player_pm, *s_opt))
-            {
-                server["hit"] = true;
-                int crit = Attack::crit_multi(battle_opt->player_pm);
-                server["crit"] = crit;
-                float dmg = Attack::attack(battle_opt->player_pm, battle_opt->server_pm, *s_opt, crit);
-                server["hurt"] = dmg;
-                battle_opt->server_pm.cur_hp -= dmg;
-                server["hp"] = battle_opt->server_pm.cur_hp;
-            }
-            else
-            {
-                server["hit"] = false;
-            }
+            server["hit"] = false;
         }
 
-        result["result"] = true;
+        if(Attack::is_hit(battle_opt->server_pm, *s_opt))
+        {
+            do_attack(player, battle_opt->server_pm, battle_opt->player_pm, *s_opt);
+        }
+        else
+        {
+            player["hit"] = false;
+        }
     }
+    else
+    {
+        player["first"] = false;
+        server["first"] = true;
+
+        if(Attack::is_hit(battle_opt->server_pm, *s_opt))
+        {
+            do_attack(player, battle_opt->server_pm, battle_opt->player_pm, *s_opt);
+        }
+        else
+        {
+            player["hit"] = false;
+        }
+
+        if(Attack::is_hit(battle_opt->player_pm, *s_opt))
+        {
+            do_attack(server, battle_opt->player_pm, battle_opt->server_pm, *s_opt);
+        }
+        else
+        {
+            server["hit"] = false;
+        }
+    }
+    result["result"] = true;
 
     if(battle_opt->player_pm.cur_hp > 0 && battle_opt->server_pm.cur_hp > 0)
     {
