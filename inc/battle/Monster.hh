@@ -9,7 +9,8 @@ struct Monster
     std::string name;    /**< 精灵名称 */
     int level;           /**< 精灵等级 */
     int exp;             /**< 精灵经验 */
-    int type;            /**< 精灵属性 */
+    int type1;           /**< 第一属性 */
+    int type2;           /**< 第二属性 */
 
     /** 区分不同PM的数值，主要读取配表数值 */
     int bs_hp;           /**< 生命种族值 */
@@ -57,7 +58,7 @@ struct Monster
     void serialize(Archive & ar)
     {
         ar(
-            id, name, level, exp, type, bs_hp, bs_atk, bs_def, bs_satk, bs_sdef, bs_spd,
+            id, name, level, exp, type1, type2, bs_hp, bs_atk, bs_def, bs_satk, bs_sdef, bs_spd,
             ev_hp, ev_atk, ev_def, ev_satk, ev_sdef, ev_spd, atk_lv, def_lv, satk_lv, sdef_lv,
             spd_lv, acc_lv, crit_lv, skill1, skill2, skill3, skill4, ability
         );
@@ -87,13 +88,13 @@ namespace soci
         {
             m = { 
                 v.get<int>("id"), v.get<std::string>("name"), v.get<int>("level"), v.get<int>("exp"),
-                v.get<int>("type"), v.get<int>("bs_hp"), v.get<int>("bs_atk"), v.get<int>("bs_def"),
-                v.get<int>("bs_satk"), v.get<int>("bs_sdef"), v.get<int>("bs_spd"), v.get<int>("ev_hp"),
-                v.get<int>("ev_atk"), v.get<int>("ev_def"), v.get<int>("ev_satk"), v.get<int>("ev_sdef"),
-                v.get<int>("ev_spd"), v.get<int>("atk_lv"), v.get<int>("def_lv"), v.get<int>("satk_lv"), 
-                v.get<int>("sdef_lv"), v.get<int>("spd_lv"), v.get<int>("acc_lv"), v.get<int>("crit_lv"), 
-                0, 0, 0, 0, 0, 0, 0, 0,
-                v.get<int>("skill1"), v.get<int>("skill2"), v.get<int>("skill3"), v.get<int>("skill4"), v.get<int>("ability")
+                v.get<int>("type1"), v.get<int>("type2"), v.get<int>("bs_hp"), v.get<int>("bs_atk"), 
+                v.get<int>("bs_def"), v.get<int>("bs_satk"), v.get<int>("bs_sdef"), v.get<int>("bs_spd"), 
+                v.get<int>("ev_hp"), v.get<int>("ev_atk"), v.get<int>("ev_def"), v.get<int>("ev_satk"), 
+                v.get<int>("ev_sdef"), v.get<int>("ev_spd"), v.get<int>("atk_lv"), v.get<int>("def_lv"), 
+                v.get<int>("satk_lv"),  v.get<int>("sdef_lv"), v.get<int>("spd_lv"), v.get<int>("acc_lv"), 
+                v.get<int>("crit_lv"),  0, 0, 0, 0, 0, 0, 0, 0, v.get<int>("skill1"), v.get<int>("skill2"), 
+                v.get<int>("skill3"), v.get<int>("skill4"), v.get<int>("ability")
             };
         }
 
@@ -103,7 +104,8 @@ namespace soci
             v.set("name", m.name); 
             v.set("level", m.level); 
             v.set("exp", m.exp);
-            v.set("type", m.type); 
+            v.set("type1", m.type1); 
+            v.set("type2", m.type2); 
             v.set("bs_hp", m.bs_hp); 
             v.set("bs_atk", m.bs_atk); 
             v.set("bs_def", m.bs_def); 

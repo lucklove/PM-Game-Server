@@ -1,10 +1,9 @@
 #pragma once
 #include "battle/Battle.hh"
-#include "Storage.hh"
 #include "storage_factory.hh"
 #include <unordered_map>
 
-struct BattleMemoryStorage
+struct BattleDB
 {
 public:
     static Optional<Battle> get(int id)
@@ -22,5 +21,3 @@ public:
         MemoryStorage<Battle>::del(id);
     }
 };
-
-using BattleDB = Storage<BattleMemoryStorage>;

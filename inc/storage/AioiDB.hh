@@ -1,12 +1,11 @@
 #pragma once
-#include "Storage.hh"
 
-struct AioiMemoryStorage
+struct AioiDB
 {
-    static Optional<float> get(int att, int def)
+    static float get(int att, int def)
     {
         if(att > 17 || def > 17 || att <= 0 || def <= 0)
-            return {};
+            return 0;
         constexpr float local_db[17][17] =
         { /** 1  2  3  4  5  6  7  8  9  10  11  12  13  14  15  16  17 */
             { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.5, 0, 1, 1, 0.5 },              /**< 1 */
@@ -29,14 +28,4 @@ struct AioiMemoryStorage
         };
         return local_db[att - 1][def - 1];
     }
-
-    static void set(...)
-    {
-    }
-
-    static void del(...)
-    {
-    }        
 };
-
-using AioiDB = Storage<AioiMemoryStorage>;

@@ -80,11 +80,11 @@ struct MonsterPersistentStorage
     {
         soci::session sql(soci::mysql, "db=pocket_monster_db user=root pass=lucklove");
         sql << "insert into monster("
-                    "name, level, exp, type, bs_hp, bs_atk, bs_def, bs_satk, bs_sdef, bs_spd, "
+                    "name, level, exp, type1, type2, bs_hp, bs_atk, bs_def, bs_satk, bs_sdef, bs_spd, "
                     "ev_hp, ev_atk, ev_def, ev_satk, ev_sdef, ev_spd, atk_lv, def_lv, satk_lv, "
                     "sdef_lv, spd_lv, acc_lv, crit_lv, skill1, skill2, skill3, skill4, ability"
                 ") values("
-                    ":name, :level, :exp, :type, :bs_hp, :bs_atk, :bs_def,:bs_satk, :bs_sdef, :bs_spd, "
+                    ":name, :level, :exp, :type1, :type2, :bs_hp, :bs_atk, :bs_def,:bs_satk, :bs_sdef, :bs_spd, "
                     ":ev_hp, :ev_atk, :ev_def, :ev_satk, :ev_sdef, :ev_spd, :atk_lv, :def_lv, :satk_lv, "
                     ":sdef_lv, :spd_lv, :acc_lv, :crit_lv, :skill1, :skill2, :skill3, :skill4, :ability)", 
                 soci::use(m);

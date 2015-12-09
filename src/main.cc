@@ -1,6 +1,7 @@
 #include "crow/crow.h"
 #include "storage/BattleDB.hh"
 #include "storage/SkillDB.hh"
+#include "storage/LevelDB.hh"
 #include "battle/Attack.hh"
 
 static auto handle_battle_initiate(int p_pm_id, int s_pm_id)

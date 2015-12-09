@@ -24,8 +24,8 @@ private:
 public:
     static Optional<T> get(int id)
     {
-        auto& db = static_storage();
         std::lock_guard<std::mutex> lck(storage_lock());
+        auto& db = static_storage();
         auto ptr = db.find(id);
         if(ptr == db.end())
             return {};
@@ -34,16 +34,16 @@ public:
 
     static void set(int id, const T& item)
     {
-        auto& db = static_storage();
         std::lock_guard<std::mutex> lck(storage_lock());
+        auto& db = static_storage();
         db.erase(id);
         db.insert({id, item});
     }
 
     static void del(int id)
     {
-        auto& db = static_storage();
         std::lock_guard<std::mutex> lck(storage_lock());
+        auto& db = static_storage();
         db.erase(id);
     }
 };
