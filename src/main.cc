@@ -3,6 +3,7 @@
 #include "storage/SkillDB.hh"
 #include "storage/LevelDB.hh"
 #include "battle/Attack.hh"
+#include "battle/Round.hh"
 
 static auto handle_battle_initiate(int p_pm_id, int s_pm_id)
 {
@@ -36,76 +37,46 @@ static auto handle_attack(const crow::request& req, int battle_id)
         result["error"] = "invalid battle id";
         return crow::response{result};;
     }
-    auto s_opt = SkillDB::get(x["skill"].i());
-    if(!s_opt)
+    Monster& role_pm = battle_opt->role_pm;
+    Monster& enemy_pm = battle_opt->enemy_pm;
+    
+    auto role_s_opt = SkillDB::get(x["skill"].i());
+    auto enemy_s_opt = enemy_pm.peekSkill();
+    if(!role_s_opt || !enemy_s_opt)
     {
         result["result"] = false;
-        result["error"] = "no such skill";
+        result["error"] = "selected skill not exist(role or enemy)";
         return crow::response{result};
     }
-    auto& player = result["player"]; 
-    auto& server = result["server"]; 
+    Skill& role_skill = *role_s_opt;
+    Skill& enemy_skill = *enemy_s_opt;
 
-    auto do_attack = [](auto& res, Monster& m_a, Monster& m_b, Skill& s)
+    auto& role_res = result["role"]; 
+    auto& enemy_res = result["enemy"]; 
+
+    Round round;
+    auto do_attack = Attack::do_attack<crow::json::wvalue>;
+    if(Attack::is_first(role_pm, enemy_pm, role_skill, enemy_skill))
     {
-        res["hit"] = true;
-        int crit = Attack::crit_multi(m_a);
-        res["crit"] = crit;
-        float dmg = Attack::attack(m_a, m_b, s, crit);
-        res["hurt"] = dmg;
-        m_b.cur_hp -= dmg;
-        res["hp"] = m_b.cur_hp;
-    };
-
-    if(Attack::is_first(battle_opt->player_pm, battle_opt->server_pm))
-    {
-        player["first"] = true;
-        server["first"] = false;
-
-        if(Attack::is_hit(battle_opt->player_pm, *s_opt))
-        {
-            do_attack(server, battle_opt->player_pm, battle_opt->server_pm, *s_opt);
-        }
-        else
-        {
-            server["hit"] = false;
-        }
-
-        if(Attack::is_hit(battle_opt->server_pm, *s_opt))
-        {
-            do_attack(player, battle_opt->server_pm, battle_opt->player_pm, *s_opt);
-        }
-        else
-        {
-            player["hit"] = false;
-        }
+        result["firstMove"] = "role";
+        round.onFirstDebuff([]{});
+        round.onFirstAttack(do_attack, role_res, enemy_res, role_pm, enemy_pm, role_skill, enemy_skill);
+        round.onLastDebuff([]{});
+        round.onLastAttack(do_attack, enemy_res, role_res, enemy_pm, role_pm, enemy_skill, role_skill);
     }
     else
     {
-        player["first"] = false;
-        server["first"] = true;
-
-        if(Attack::is_hit(battle_opt->server_pm, *s_opt))
-        {
-            do_attack(player, battle_opt->server_pm, battle_opt->player_pm, *s_opt);
-        }
-        else
-        {
-            player["hit"] = false;
-        }
-
-        if(Attack::is_hit(battle_opt->player_pm, *s_opt))
-        {
-            do_attack(server, battle_opt->player_pm, battle_opt->server_pm, *s_opt);
-        }
-        else
-        {
-            server["hit"] = false;
-        }
+        result["firstMove"] = "enemy";
+        round.onFirstDebuff([]{});
+        round.onFirstAttack(do_attack, enemy_res, role_res, enemy_pm, role_pm, enemy_skill, role_skill);
+        round.onLastDebuff([]{});
+        round.onLastAttack(do_attack, role_res, enemy_res, role_pm, enemy_pm, role_skill, enemy_skill);
     }
+    round.apply();
+
     result["result"] = true;
 
-    if(battle_opt->player_pm.cur_hp > 0 && battle_opt->server_pm.cur_hp > 0)
+    if(role_pm.cur_hp > 0 && enemy_pm.cur_hp > 0)
     {
         BattleDB::set(battle_opt->id, *battle_opt);
     }

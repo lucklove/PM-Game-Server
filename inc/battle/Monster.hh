@@ -1,7 +1,10 @@
 #pragma once
 #include <string>
 #include <soci/soci.h>
+#include <array>
 #include "cereal/archives/json.hpp"
+#include "cereal/types/array.hpp"
+#include "storage/SkillDB.hh"
 
 struct Monster
 {
@@ -9,8 +12,7 @@ struct Monster
     std::string name;    /**< 精灵名称 */
     int level;           /**< 精灵等级 */
     int exp;             /**< 精灵经验 */
-    int type1;           /**< 第一属性 */
-    int type2;           /**< 第二属性 */
+    std::array<int, 2> types;   /**< 属性 */
 
     /** 区分不同PM的数值，主要读取配表数值 */
     int bs_hp;           /**< 生命种族值 */
@@ -46,11 +48,10 @@ struct Monster
     int cur_satk;         /**< 最终特攻 */
     int cur_sdef;         /**< 最终特防 */
     int cur_spd;          /**< 最终速度 */
-   
-    int skill1; 
-    int skill2; 
-    int skill3; 
-    int skill4; 
+    int debuff_cur;       /**< 当前异常状态 */
+    int debuff_round;     /**< 异常状态持续回合 */
+ 
+    std::array<int, 4> skills;
 
     int ability;         /**< 特性ID，影响计算参数 */
     
@@ -58,9 +59,9 @@ struct Monster
     void serialize(Archive & ar)
     {
         ar(
-            id, name, level, exp, type1, type2, bs_hp, bs_atk, bs_def, bs_satk, bs_sdef, bs_spd,
+            id, name, level, exp, types, bs_hp, bs_atk, bs_def, bs_satk, bs_sdef, bs_spd,
             ev_hp, ev_atk, ev_def, ev_satk, ev_sdef, ev_spd, atk_lv, def_lv, satk_lv, sdef_lv,
-            spd_lv, acc_lv, crit_lv, skill1, skill2, skill3, skill4, ability
+            spd_lv, acc_lv, crit_lv, skills, ability
         );
     }
 
@@ -75,6 +76,19 @@ struct Monster
        cereal::JSONInputArchive iarchive(is);
        iarchive(*this); 
     }
+
+    Optional<Skill> peekSkill()
+    {
+        static int turn = 0;
+        turn %= 4;
+        if(skills[turn] == 0)
+        {
+            turn = 0;
+            if(skills[0] == 0)
+                throw std::logic_error{"monster has no skill"};
+        }
+        return SkillDB::get(skills[turn]);
+    } 
 };
 
 namespace soci
@@ -88,13 +102,14 @@ namespace soci
         {
             m = { 
                 v.get<int>("id"), v.get<std::string>("name"), v.get<int>("level"), v.get<int>("exp"),
-                v.get<int>("type1"), v.get<int>("type2"), v.get<int>("bs_hp"), v.get<int>("bs_atk"), 
+                { v.get<int>("type1"), v.get<int>("type2") }, v.get<int>("bs_hp"), v.get<int>("bs_atk"), 
                 v.get<int>("bs_def"), v.get<int>("bs_satk"), v.get<int>("bs_sdef"), v.get<int>("bs_spd"), 
                 v.get<int>("ev_hp"), v.get<int>("ev_atk"), v.get<int>("ev_def"), v.get<int>("ev_satk"), 
                 v.get<int>("ev_sdef"), v.get<int>("ev_spd"), v.get<int>("atk_lv"), v.get<int>("def_lv"), 
                 v.get<int>("satk_lv"),  v.get<int>("sdef_lv"), v.get<int>("spd_lv"), v.get<int>("acc_lv"), 
-                v.get<int>("crit_lv"),  0, 0, 0, 0, 0, 0, 0, 0, v.get<int>("skill1"), v.get<int>("skill2"), 
-                v.get<int>("skill3"), v.get<int>("skill4"), v.get<int>("ability")
+                v.get<int>("crit_lv"),  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                { v.get<int>("skill1"), v.get<int>("skill2"), v.get<int>("skill3"), v.get<int>("skill4") }, 
+                v.get<int>("ability")
             };
         }
 
@@ -104,8 +119,8 @@ namespace soci
             v.set("name", m.name); 
             v.set("level", m.level); 
             v.set("exp", m.exp);
-            v.set("type1", m.type1); 
-            v.set("type2", m.type2); 
+            v.set("type1", m.types[0]); 
+            v.set("type2", m.types[1]); 
             v.set("bs_hp", m.bs_hp); 
             v.set("bs_atk", m.bs_atk); 
             v.set("bs_def", m.bs_def); 
@@ -125,10 +140,10 @@ namespace soci
             v.set("spd_lv", m.spd_lv); 
             v.set("acc_lv", m.acc_lv); 
             v.set("crit_lv", m.crit_lv); 
-            v.set("skill1", m.skill1); 
-            v.set("skill2", m.skill2); 
-            v.set("skill3", m.skill3); 
-            v.set("skill4", m.skill4); 
+            v.set("skill1", m.skills[0]); 
+            v.set("skill2", m.skills[1]); 
+            v.set("skill3", m.skills[2]); 
+            v.set("skill4", m.skills[3]); 
             v.set("ability", m.ability); 
             ind = i_ok;   
         }

@@ -6,6 +6,7 @@ SET(TEST_SOURCES
     aioi_db.cc
     cereal.cc
     monster_memory_test.cc
+    round.cc
 )
 
 SET(REDIS_TEST_SOURCES
