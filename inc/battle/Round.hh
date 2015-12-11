@@ -33,10 +33,10 @@ public:
         callbacks_[3] = [&]{ f(std::forward<Params>(params)...); };
     }
 
-    /** 跳过下一阶段 */
-    void skip()
+    /** 跳过 */
+    void skip(size_t n = 1)
     {
-        ++cur_;
+        cur_ += n;
     }
 
     void apply()

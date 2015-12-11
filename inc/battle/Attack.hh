@@ -3,6 +3,7 @@
 #include "utils/Random.hh"
 #include "Skill.hh"
 #include "Monster.hh"
+#include "crow/json.h"
 
 struct Attack
 {
@@ -71,8 +72,7 @@ public:
         }
     }
 
-    template <typename ResT>
-    static void do_attack(ResT& res_a, ResT& res_b, Monster& m_a, Monster& m_b, Skill& s_a, Skill& s_b)
+    static void do_attack(crow::json::wvalue& res_a, crow::json::wvalue& res_b, Monster& m_a, Monster& m_b, Skill& s_a, Skill& s_b)
     {
         if(!is_hit(m_a, s_a))
         {

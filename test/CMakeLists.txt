@@ -7,6 +7,7 @@ SET(TEST_SOURCES
     cereal.cc
     monster_memory_test.cc
     round.cc
+    debuff_db.cc
 )
 
 SET(REDIS_TEST_SOURCES

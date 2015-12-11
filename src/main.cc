@@ -5,6 +5,8 @@
 #include "battle/Attack.hh"
 #include "battle/Round.hh"
 
+#include "storage/DebuffDB.hh"
+
 static auto handle_battle_initiate(int p_pm_id, int s_pm_id)
 {
     crow::json::wvalue result;
@@ -55,22 +57,21 @@ static auto handle_attack(const crow::request& req, int battle_id)
     auto& enemy_res = result["enemy"]; 
 
     Round round;
-    auto do_attack = Attack::do_attack<crow::json::wvalue>;
     if(Attack::is_first(role_pm, enemy_pm, role_skill, enemy_skill))
     {
         result["firstMove"] = "role";
         round.onFirstDebuff([]{});
-        round.onFirstAttack(do_attack, role_res, enemy_res, role_pm, enemy_pm, role_skill, enemy_skill);
+        round.onFirstAttack(Attack::do_attack, role_res, enemy_res, role_pm, enemy_pm, role_skill, enemy_skill);
         round.onLastDebuff([]{});
-        round.onLastAttack(do_attack, enemy_res, role_res, enemy_pm, role_pm, enemy_skill, role_skill);
+        round.onLastAttack(Attack::do_attack, enemy_res, role_res, enemy_pm, role_pm, enemy_skill, role_skill);
     }
     else
     {
         result["firstMove"] = "enemy";
         round.onFirstDebuff([]{});
-        round.onFirstAttack(do_attack, enemy_res, role_res, enemy_pm, role_pm, enemy_skill, role_skill);
+        round.onFirstAttack(Attack::do_attack, enemy_res, role_res, enemy_pm, role_pm, enemy_skill, role_skill);
         round.onLastDebuff([]{});
-        round.onLastAttack(do_attack, role_res, enemy_res, role_pm, enemy_pm, role_skill, enemy_skill);
+        round.onLastAttack(Attack::do_attack, role_res, enemy_res, role_pm, enemy_pm, role_skill, enemy_skill);
     }
     round.apply();
 
