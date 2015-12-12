@@ -60,18 +60,18 @@ static auto handle_attack(const crow::request& req, int battle_id)
     if(Attack::is_first(role_pm, enemy_pm, role_skill, enemy_skill))
     {
         result["firstMove"] = "role";
-        round.onFirstDebuff([]{});
-        round.onFirstAttack(Attack::do_attack, role_res, enemy_res, role_pm, enemy_pm, role_skill, enemy_skill);
-        round.onLastDebuff([]{});
-        round.onLastAttack(Attack::do_attack, enemy_res, role_res, enemy_pm, role_pm, enemy_skill, role_skill);
+        round.onFirstDebuff(Attack::tick_debuff, role_res, round, role_pm);
+        round.onFirstAttack(Attack::do_attack, role_res, enemy_res, role_pm, enemy_pm, role_skill);
+        round.onLastDebuff(Attack::tick_debuff, enemy_res, round, enemy_pm);
+        round.onLastAttack(Attack::do_attack, enemy_res, role_res, enemy_pm, role_pm, enemy_skill);
     }
     else
     {
         result["firstMove"] = "enemy";
-        round.onFirstDebuff([]{});
-        round.onFirstAttack(Attack::do_attack, enemy_res, role_res, enemy_pm, role_pm, enemy_skill, role_skill);
-        round.onLastDebuff([]{});
-        round.onLastAttack(Attack::do_attack, role_res, enemy_res, role_pm, enemy_pm, role_skill, enemy_skill);
+        round.onFirstDebuff(Attack::tick_debuff, enemy_res, round, enemy_pm);
+        round.onFirstAttack(Attack::do_attack, enemy_res, role_res, enemy_pm, role_pm, enemy_skill);
+        round.onLastDebuff(Attack::tick_debuff, role_res, round, role_pm);
+        round.onLastAttack(Attack::do_attack, role_res, enemy_res, role_pm, enemy_pm, role_skill);
     }
     round.apply();
 

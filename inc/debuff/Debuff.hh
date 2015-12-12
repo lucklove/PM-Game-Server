@@ -7,7 +7,7 @@
 
 struct Debuff
 {
-    virtual void apply(crow::json::wvalue& result, Round& round, Monster& m) = 0;
+    virtual void apply(crow::json::wvalue& result, Round& round, Monster& m) const = 0;
     virtual ~Debuff() = default;
 };
 
@@ -19,7 +19,7 @@ struct ConcretDebuff : Debuff           /**< 禁止构造实例 */
 template <>
 struct ConcretDebuff<1> : Debuff        /**< 麻痹 */
 {
-    void apply(crow::json::wvalue& result, Round& round, Monster& m) override
+    void apply(crow::json::wvalue& result, Round& round, Monster& m) const override
     {
         if(Random::get(0, 100) <= 25)
         {
@@ -32,7 +32,7 @@ struct ConcretDebuff<1> : Debuff        /**< 麻痹 */
 template <>
 struct ConcretDebuff<2> : Debuff        /**< 中毒 */
 {
-    void apply(crow::json::wvalue& result, Round& round, Monster& m) override
+    void apply(crow::json::wvalue& result, Round& round, Monster& m) const override
     {
         int max_hp = m.level * m.bs_hp / 50 + m.ev_hp / 4 + 10 + m.level;
         result["debuff_harm"] = max_hp * 0.125;
@@ -43,7 +43,7 @@ struct ConcretDebuff<2> : Debuff        /**< 中毒 */
 template <>
 struct ConcretDebuff<3> : Debuff        /**< 睡眠 */
 {
-    void apply(crow::json::wvalue& result, Round& round, Monster& m) override
+    void apply(crow::json::wvalue& result, Round& round, Monster& m) const override
     {
         round.skip();
     }
@@ -52,7 +52,7 @@ struct ConcretDebuff<3> : Debuff        /**< 睡眠 */
 template <>
 struct ConcretDebuff<4> : Debuff        /**< 冰冻 */
 {
-    void apply(crow::json::wvalue& result, Round& round, Monster& m) override
+    void apply(crow::json::wvalue& result, Round& round, Monster& m) const override
     {
         round.skip();
     }
@@ -61,7 +61,7 @@ struct ConcretDebuff<4> : Debuff        /**< 冰冻 */
 template <>
 struct ConcretDebuff<5> : Debuff        /**< 烧伤 */
 {
-    void apply(crow::json::wvalue& result, Round& round, Monster& m) override
+    void apply(crow::json::wvalue& result, Round& round, Monster& m) const override
     {
         int max_hp = m.level * m.bs_hp / 50 + m.ev_hp / 4 + 10 + m.level;
         result["debuff_harm"] = max_hp * 0.0625;
@@ -72,7 +72,7 @@ struct ConcretDebuff<5> : Debuff        /**< 烧伤 */
 template <>
 struct ConcretDebuff<6> : Debuff        /**< 害怕 */
 {
-    void apply(crow::json::wvalue& result, Round& round, Monster& m) override
+    void apply(crow::json::wvalue& result, Round& round, Monster& m) const override
     {
         round.skip();
     }

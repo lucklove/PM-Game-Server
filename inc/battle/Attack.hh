@@ -1,8 +1,12 @@
 #pragma once
 #include <tuple>
 #include "utils/Random.hh"
+#include "utils/combination.hh"
 #include "Skill.hh"
 #include "Monster.hh"
+#include "Round.hh"
+#include "storage/DebuffDB.hh"
+#include "storage/AioiDB.hh"
 #include "crow/json.h"
 
 struct Attack
@@ -47,13 +51,41 @@ private:
     static float attack(const Monster& a, const Monster& b, const Skill& s, int multi)
     {
         int is_physical_skill = s.skill_class == 1;
+        int is_same_type = a.types[0] == s.type || a.types[1] == s.type;
+        float mod_type_aioi = 0;
+        combinat(a.types, b.types, [&mod_type_aioi](int ta, int tb)
+        {
+            mod_type_aioi += AioiDB::get(ta, tb);
+        });
+
         return 
         (
             (a.level * 0.4 + 2) * s.power 
                 * (a.cur_atk * is_physical_skill + a.cur_satk * (1 - is_physical_skill))
                 / (b.cur_def * is_physical_skill + b.cur_sdef * (1 - is_physical_skill))
                 / 50 + 2
-        ) * Random::get(217, 255) / 255.0 * (1 + multi);
+        ) * Random::get(217, 255) / 255.0 * (1 + multi) * (1 + is_same_type * 0.5) * mod_type_aioi;
+    }
+
+    /** 改变PM属性 */
+    static void change_attr(Monster& m, const Skill& s)
+    {
+        auto limit_attr = [](int& attr)
+        {
+            if(attr > 6) attr = 6;
+            if(attr < -6) attr = -6;
+        };
+
+        switch(s.attr)
+        {
+            case 1: m.atk_lv += s.lvl_attr; limit_attr(m.atk_lv); break;
+            case 2: m.def_lv += s.lvl_attr; limit_attr(m.def_lv); break;
+            case 3: m.satk_lv += s.lvl_attr; limit_attr(m.satk_lv); break;
+            case 4: m.def_lv += s.lvl_attr; limit_attr(m.sdef_lv); break;
+            case 5: m.spd_lv += s.lvl_attr; limit_attr(m.spd_lv); break;
+            case 6: m.acc_lv += s.lvl_attr; limit_attr(m.acc_lv); break;
+            case 7: m.crit_lv += s.lvl_attr; limit_attr(m.crit_lv); break;
+        }
     }
 
 public:
@@ -72,7 +104,7 @@ public:
         }
     }
 
-    static void do_attack(crow::json::wvalue& res_a, crow::json::wvalue& res_b, Monster& m_a, Monster& m_b, Skill& s_a, Skill& s_b)
+    static void do_attack(crow::json::wvalue& res_a, crow::json::wvalue& res_b, Monster& m_a, Monster& m_b, const Skill& s_a)
     {
         if(!is_hit(m_a, s_a))
         {
@@ -85,5 +117,44 @@ public:
         res_a["hurt"] = dmg;
         m_b.cur_hp -= dmg;
         res_b["hp"] = m_b.cur_hp;
+
+        /** 技能导致异常 */
+        if(Random::get(0, 100) < s_a.rate_attr)
+        {
+            if(s_a.role_attr == 0)
+            {
+                res_a["attr"]["type"] = s_a.attr;
+                res_a["attr"]["value"] = s_a.lvl_attr;
+                change_attr(m_a, s_a);
+                m_a.updateAttr();
+            }
+            else
+            {
+                res_b["attr"]["type"] = s_a.attr;
+                res_b["attr"]["value"] = s_a.lvl_attr;
+                change_attr(m_b, s_a);
+                m_b.updateAttr();
+            }
+        }
     };
+
+    static void tick_debuff(crow::json::wvalue& res, Round& r, Monster& m)
+    {
+        if(m.debuff_cur != 0)
+        {
+            auto debuff_ptr = DebuffDB::get(m.debuff_cur);
+            if(!debuff_ptr)
+                throw std::logic_error{"debuff not exist"};
+
+            debuff_ptr->apply(res, r, m);
+
+            /** 移除判定 */
+            if(--m.debuff_round == 0)
+            {
+                m.debuff_cur = 0;
+                res["remove"] = true;
+            }           
+            res["remove"] = false;
+        }
+    }
 };

@@ -88,6 +88,23 @@ struct Monster
                 throw std::logic_error{"monster has no skill"};
         }
         return SkillDB::get(skills[turn]);
+    }
+
+    /** 初始化临时属性 */
+    void init()
+    {
+        cur_hp = level * bs_hp / 50 + ev_hp / 4 + 10 + level;
+        updateAttr();
+    }
+
+    /** 更新除cur_hp外用于前端显示的临时属性 */
+    void updateAttr()
+    {
+        cur_atk = level * bs_atk / 50 + ev_atk / 4 + 5;
+        cur_def = level * bs_def / 50 + ev_def / 4 + 5;
+        cur_satk = level * bs_satk / 50 + ev_satk / 4 + 5;
+        cur_sdef = level * bs_sdef / 50 + ev_sdef / 4 + 5;
+        cur_spd = level * bs_spd / 50 + ev_spd / 4 + 5;
     } 
 };
 
