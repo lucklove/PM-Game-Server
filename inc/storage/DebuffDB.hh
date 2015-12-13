@@ -16,7 +16,7 @@ public:
     {
         static std::array<std::unique_ptr<Debuff>, 6> local_db = gen_array(std::make_index_sequence<6>()); 
         if(id < 1 || id > 6)
-            return nullptr;
+            throw std::logic_error{"debuff not exist"};
         return local_db[id].get();
     }
 };

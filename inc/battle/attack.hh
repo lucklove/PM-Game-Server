@@ -8,6 +8,44 @@
 #include "storage/DebuffDB.hh"
 #include "storage/AioiDB.hh"
 #include "crow/json.h"
+#include "script/Lua.hh"
+
+struct AttackOrder
+{
+    /** 判断先后 */
+    static bool is_first(const Monster& a, const Monster& b, const Skill& sa, const Skill& sb)
+    {
+        if(sa.last_order ^ sb.last_order)
+        {
+            if(sb.last_order)
+                return true;
+            return false;
+        }
+        else
+        {
+            return a.cur_spd > b.cur_spd;
+        }
+    }
+};
+
+struct Tick
+{
+    static void tick_debuff(crow::json::wvalue& res, Round& r, Monster& m)
+    {
+        if(m.debuff_cur != 0)
+        {
+            DebuffDB::get(m.debuff_cur)->apply(res, r, m);
+
+            /** 移除判定 */
+            if(--m.debuff_round == 0)
+            {
+                m.debuff_cur = 0;
+                res["remove"] = true;
+            }           
+            res["remove"] = false;
+        }
+    }
+};
 
 struct Attack
 {
@@ -57,14 +95,19 @@ private:
         {
             mod_type_aioi += AioiDB::get(ta, tb);
         });
-
+        auto& lua_ctx = Lua::context();
+        double mod_type_value = lua_ctx["mod_type_value"];
+        double mod_weather_eff = lua_ctx["mod_weather_eff"];
+        double mod_dmg_ability = lua_ctx["mod_dmg_ability"];
+        double fix_dmg = lua_ctx["fix_dmg"];
         return 
         (
             (a.level * 0.4 + 2) * s.power 
                 * (a.cur_atk * is_physical_skill + a.cur_satk * (1 - is_physical_skill))
                 / (b.cur_def * is_physical_skill + b.cur_sdef * (1 - is_physical_skill))
                 / 50 + 2
-        ) * Random::get(217, 255) / 255.0 * (1 + multi) * (1 + is_same_type * 0.5) * mod_type_aioi;
+        ) * Random::get(217, 255) / 255.0 * (1 + multi) * (1 + is_same_type * mod_type_value) * mod_type_aioi
+        * mod_weather_eff * mod_dmg_ability + fix_dmg;
     }
 
     /** 改变PM属性 */
@@ -86,24 +129,11 @@ private:
             case 6: m.acc_lv += s.lvl_attr; limit_attr(m.acc_lv); break;
             case 7: m.crit_lv += s.lvl_attr; limit_attr(m.crit_lv); break;
         }
+
+        m.updateAttr();
     }
 
 public:
-    /** 判断先后 */
-    static bool is_first(const Monster& a, const Monster& b, const Skill& sa, const Skill& sb)
-    {
-        if(sa.last_order ^ sb.last_order)
-        {
-            if(sb.last_order)
-                return true;
-            return false;
-        }
-        else
-        {
-            return a.cur_spd > b.cur_spd;
-        }
-    }
-
     static void do_attack(crow::json::wvalue& res_a, crow::json::wvalue& res_b, Monster& m_a, Monster& m_b, const Skill& s_a)
     {
         if(!is_hit(m_a, s_a))
@@ -118,7 +148,7 @@ public:
         m_b.cur_hp -= dmg;
         res_b["hp"] = m_b.cur_hp;
 
-        /** 技能导致异常 */
+        /** 技能导致能力变化 */
         if(Random::get(0, 100) < s_a.rate_attr)
         {
             if(s_a.role_attr == 0)
@@ -126,35 +156,31 @@ public:
                 res_a["attr"]["type"] = s_a.attr;
                 res_a["attr"]["value"] = s_a.lvl_attr;
                 change_attr(m_a, s_a);
-                m_a.updateAttr();
             }
             else
             {
                 res_b["attr"]["type"] = s_a.attr;
                 res_b["attr"]["value"] = s_a.lvl_attr;
                 change_attr(m_b, s_a);
-                m_b.updateAttr();
             }
         }
-    };
 
-    static void tick_debuff(crow::json::wvalue& res, Round& r, Monster& m)
-    {
-        if(m.debuff_cur != 0)
+        /** 技能导致异常 */
+        Monster *pm = nullptr;
+        if(s_a.role_debuff == 0)
         {
-            auto debuff_ptr = DebuffDB::get(m.debuff_cur);
-            if(!debuff_ptr)
-                throw std::logic_error{"debuff not exist"};
-
-            debuff_ptr->apply(res, r, m);
-
-            /** 移除判定 */
-            if(--m.debuff_round == 0)
-            {
-                m.debuff_cur = 0;
-                res["remove"] = true;
-            }           
-            res["remove"] = false;
+            pm = &m_a;
         }
-    }
+        else
+        {
+            pm = &m_b;
+        }
+
+        if(Random::get(0, 100) < s_a.rate_debuff && pm->debuff_cur == 0)
+        {
+            pm->debuff_cur = s_a.debuff;
+            pm->debuff_round = s_a.round;
+ //           DebuffDB::get(pm->debuff_cur)->on(res, r, *pm);
+        }
+    };
 };

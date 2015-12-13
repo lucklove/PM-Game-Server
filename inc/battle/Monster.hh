@@ -54,7 +54,7 @@ struct Monster
     std::array<int, 4> skills;
 
     int ability;         /**< 特性ID，影响计算参数 */
-    
+   
     template <typename Archive>
     void serialize(Archive & ar)
     {
