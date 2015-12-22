@@ -5,6 +5,7 @@
 #include "battle/attack.hh"
 #include "battle/Round.hh"
 #include "storage/DebuffDB.hh"
+#include "utils/ScopeGuard.hh"
 
 static auto handle_battle_initiate(int p_pm_id, int s_pm_id)
 {
@@ -94,5 +95,5 @@ int main()
 
     CROW_ROUTE(app, "/battle/<int>/<int>")(handle_battle_initiate);
     CROW_ROUTE(app, "/attack/<int>").methods("POST"_method)(handle_attack);
-    app.port(8080).multithreaded().run();
+    app.port(8080).run();
 }

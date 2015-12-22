@@ -86,15 +86,12 @@ private:
 
     /** 计算攻击，对对方的伤害 */
     /** 未处理技能威力修正 */
+/*
     static float attack(const Monster& a, const Monster& b, const Skill& s, int multi)
     {
         int is_physical_skill = s.skill_class == 1;
-        int is_same_type = a.types[0] == s.type || a.types[1] == s.type;
-        float mod_type_aioi = 0;
-        combinat(a.types, b.types, [&mod_type_aioi](int ta, int tb)
-        {
-            mod_type_aioi += AioiDB::get(ta, tb);
-        });
+        int is_same_type = a.type1 == s.type || a.type2 == s.type;
+        float mod_type_aioi = 1;
         auto& lua_ctx = Lua::context();
         double mod_type_value = lua_ctx["mod_type_value"];
         double mod_weather_eff = lua_ctx["mod_weather_eff"];
@@ -109,7 +106,7 @@ private:
         ) * Random::get(217, 255) / 255.0 * (1 + multi) * (1 + is_same_type * mod_type_value) * mod_type_aioi
         * mod_weather_eff * mod_dmg_ability + fix_dmg;
     }
-
+*/
     /** 改变PM属性 */
     static void change_attr(Monster& m, const Skill& s)
     {
@@ -143,10 +140,16 @@ public:
         }
         int crit = Attack::crit_multi(m_a);
         res_a["crit"] = crit;
-        float dmg = attack(m_a, m_b, s_a, crit);
+
+        auto& lua_ctx = Lua::context();
+        double dmg = lua_ctx["monsterAttack"](m_a, m_b, s_a, crit).get<double>();
+
         res_a["hurt"] = dmg;
         m_b.cur_hp -= dmg;
         res_b["hp"] = m_b.cur_hp;
+
+        m_a.updateAttr();
+        m_b.updateAttr();
 
         /** 技能导致能力变化 */
         if(Random::get(0, 100) < s_a.rate_attr)

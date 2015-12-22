@@ -8,18 +8,24 @@ SET(TEST_SOURCES
     monster_memory_test.cc
     round.cc
     debuff_db.cc
+    ../src/script/ClassRegister.cc
+    ../src/script/FunctionRegister.cc
 )
 
 SET(REDIS_TEST_SOURCES
 	test.cc
     redis_test.cc
     monster_cache_test.cc
+    ../src/script/ClassRegister.cc
+    ../src/script/FunctionRegister.cc
 )
 
 SET(MYSQL_TEST_SOURCES
 	test.cc
     monster_persistent_test.cc
     skill_storage_test.cc
+    ../src/script/ClassRegister.cc
+    ../src/script/FunctionRegister.cc
 )
 
 SET(LINK_LIBS
@@ -29,6 +35,7 @@ SET(LINK_LIBS
     hiredis
     soci_core 
     soci_mysql
+    lua
 )
 
 INCLUDE_DIRECTORIES(

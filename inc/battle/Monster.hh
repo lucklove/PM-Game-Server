@@ -5,6 +5,7 @@
 #include "cereal/archives/json.hpp"
 #include "cereal/types/array.hpp"
 #include "storage/SkillDB.hh"
+#include "script/Lua.hh"
 
 struct Monster
 {
@@ -12,7 +13,8 @@ struct Monster
     std::string name;    /**< 精灵名称 */
     int level;           /**< 精灵等级 */
     int exp;             /**< 精灵经验 */
-    std::array<int, 2> types;   /**< 属性 */
+    int type1;           /**< 第一属性 */
+    int type2;           /**< 第二属性 */
 
     /** 区分不同PM的数值，主要读取配表数值 */
     int bs_hp;           /**< 生命种族值 */
@@ -54,12 +56,12 @@ struct Monster
     std::array<int, 4> skills;
 
     int ability;         /**< 特性ID，影响计算参数 */
-   
+
     template <typename Archive>
     void serialize(Archive & ar)
     {
         ar(
-            id, name, level, exp, types, bs_hp, bs_atk, bs_def, bs_satk, bs_sdef, bs_spd,
+            id, name, level, exp, type1, type2, bs_hp, bs_atk, bs_def, bs_satk, bs_sdef, bs_spd,
             ev_hp, ev_atk, ev_def, ev_satk, ev_sdef, ev_spd, atk_lv, def_lv, satk_lv, sdef_lv,
             spd_lv, acc_lv, crit_lv, skills, ability
         );
@@ -93,18 +95,14 @@ struct Monster
     /** 初始化临时属性 */
     void init()
     {
-        cur_hp = level * bs_hp / 50 + ev_hp / 4 + 10 + level;
+        Lua::context()["initMonsterHP"](std::ref(*this));
         updateAttr();
     }
 
     /** 更新除cur_hp外用于前端显示的临时属性 */
     void updateAttr()
     {
-        cur_atk = level * bs_atk / 50 + ev_atk / 4 + 5;
-        cur_def = level * bs_def / 50 + ev_def / 4 + 5;
-        cur_satk = level * bs_satk / 50 + ev_satk / 4 + 5;
-        cur_sdef = level * bs_sdef / 50 + ev_sdef / 4 + 5;
-        cur_spd = level * bs_spd / 50 + ev_spd / 4 + 5;
+        Lua::context()["updateMonsterAttr"](std::ref(*this));
     } 
 };
 
@@ -119,7 +117,7 @@ namespace soci
         {
             m = { 
                 v.get<int>("id"), v.get<std::string>("name"), v.get<int>("level"), v.get<int>("exp"),
-                { v.get<int>("type1"), v.get<int>("type2") }, v.get<int>("bs_hp"), v.get<int>("bs_atk"), 
+                v.get<int>("type1"), v.get<int>("type2"), v.get<int>("bs_hp"), v.get<int>("bs_atk"), 
                 v.get<int>("bs_def"), v.get<int>("bs_satk"), v.get<int>("bs_sdef"), v.get<int>("bs_spd"), 
                 v.get<int>("ev_hp"), v.get<int>("ev_atk"), v.get<int>("ev_def"), v.get<int>("ev_satk"), 
                 v.get<int>("ev_sdef"), v.get<int>("ev_spd"), v.get<int>("atk_lv"), v.get<int>("def_lv"), 
@@ -136,8 +134,8 @@ namespace soci
             v.set("name", m.name); 
             v.set("level", m.level); 
             v.set("exp", m.exp);
-            v.set("type1", m.types[0]); 
-            v.set("type2", m.types[1]); 
+            v.set("type1", m.type1); 
+            v.set("type2", m.type2); 
             v.set("bs_hp", m.bs_hp); 
             v.set("bs_atk", m.bs_atk); 
             v.set("bs_def", m.bs_def); 

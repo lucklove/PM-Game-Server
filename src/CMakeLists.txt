@@ -1,5 +1,7 @@
 SET(POCKET_MONSTER_SRCS
     main.cc
+    script/ClassRegister.cc
+    script/FunctionRegister.cc
 )
 
 INCLUDE_DIRECTORIES(
