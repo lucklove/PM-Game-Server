@@ -48,7 +48,7 @@ namespace nua
 
             int status = lua_pcall(l_, functor_arguments_.size(), num_results, handler_index - 1);
             lua_remove(l_, handler_index - 1);
-            
+
             if(status != LUA_OK)
                 ErrorHandler::handle(l_, status);
         }
@@ -107,7 +107,7 @@ namespace nua
 
         Selector(const Selector& other) = default;
 
-        ~Selector()
+        ~Selector() noexcept(false)
         {
             if(functor_active_)
                 get();

@@ -12,7 +12,7 @@ private:
     }
 
 public:
-    static const Debuff *get(int id)
+    static Debuff *get(int id)
     {
         static std::array<std::unique_ptr<Debuff>, 6> local_db = gen_array(std::make_index_sequence<6>()); 
         if(id < 1 || id > 6)

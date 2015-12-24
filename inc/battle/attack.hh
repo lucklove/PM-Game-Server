@@ -4,7 +4,6 @@
 #include "utils/combination.hh"
 #include "Skill.hh"
 #include "Monster.hh"
-#include "Round.hh"
 #include "storage/DebuffDB.hh"
 #include "storage/AioiDB.hh"
 #include "crow/json.h"
@@ -30,11 +29,11 @@ struct AttackOrder
 
 struct Tick
 {
-    static void tick_debuff(crow::json::wvalue& res, Round& r, Monster& m)
+    static void tick_debuff(crow::json::wvalue& res, Monster& m)
     {
         if(m.debuff_cur != 0)
         {
-            DebuffDB::get(m.debuff_cur)->apply(res, r, m);
+            DebuffDB::get(m.debuff_cur)->apply(res, m);
 
             /** 移除判定 */
             if(--m.debuff_round == 0)
@@ -84,29 +83,6 @@ private:
         return 0;    
     }
 
-    /** 计算攻击，对对方的伤害 */
-    /** 未处理技能威力修正 */
-/*
-    static float attack(const Monster& a, const Monster& b, const Skill& s, int multi)
-    {
-        int is_physical_skill = s.skill_class == 1;
-        int is_same_type = a.type1 == s.type || a.type2 == s.type;
-        float mod_type_aioi = 1;
-        auto& lua_ctx = Lua::context();
-        double mod_type_value = lua_ctx["mod_type_value"];
-        double mod_weather_eff = lua_ctx["mod_weather_eff"];
-        double mod_dmg_ability = lua_ctx["mod_dmg_ability"];
-        double fix_dmg = lua_ctx["fix_dmg"];
-        return 
-        (
-            (a.level * 0.4 + 2) * s.power 
-                * (a.cur_atk * is_physical_skill + a.cur_satk * (1 - is_physical_skill))
-                / (b.cur_def * is_physical_skill + b.cur_sdef * (1 - is_physical_skill))
-                / 50 + 2
-        ) * Random::get(217, 255) / 255.0 * (1 + multi) * (1 + is_same_type * mod_type_value) * mod_type_aioi
-        * mod_weather_eff * mod_dmg_ability + fix_dmg;
-    }
-*/
     /** 改变PM属性 */
     static void change_attr(Monster& m, const Skill& s)
     {
@@ -183,7 +159,6 @@ public:
         {
             pm->debuff_cur = s_a.debuff;
             pm->debuff_round = s_a.round;
- //           DebuffDB::get(pm->debuff_cur)->on(res, r, *pm);
         }
     };
 };

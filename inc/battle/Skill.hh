@@ -13,7 +13,6 @@ struct Skill
     int acc;                /**< 技能命中 */
     int is_melee;           /**< 近战远程 */
     int damage_hurt;        /**< 技能反伤值 */
-    int weather_eff;        /**< 技能追加的天气 */
     int rate_attr;          /**< 技能追加能力概率 */
     int attr;               /**< 技能追加能力属性 */
     int lvl_attr;           /**< 技能追加能力等级 */
@@ -23,13 +22,14 @@ struct Skill
     int role_debuff;        /**< 异常对象 */
     int round;              /**< 异常回合数 */
     int last_order;         /**< 技能后攻 */
+    int fixdmg;        /**< 固定伤害 */
 
     template <typename Archive>
     void serialize(Archive & ar)
     {
         ar(
-            id, name, type, skill_class, power, acc, is_melee, damage_hurt, weather_eff, rate_attr, 
-            attr, lvl_attr, role_attr, rate_debuff, debuff, role_debuff, round, last_order
+            id, name, type, skill_class, power, acc, is_melee, damage_hurt, rate_attr, attr, 
+            lvl_attr, role_attr, rate_debuff, debuff, role_debuff, round, last_order, fixdmg
         );
     }
 
@@ -58,9 +58,9 @@ namespace soci
             s = { 
                 v.get<int>("id"), v.get<std::string>("name"), v.get<int>("type"), v.get<int>("class"), 
                 v.get<int>("power"), v.get<int>("acc"), v.get<int>("is_melee"), v.get<int>("damage_hurt"), 
-                v.get<int>("weather_eff"), v.get<int>("rate_attr"), v.get<int>("attr"), v.get<int>("lvl_attr"), 
-                v.get<int>("role_attr"), v.get<int>("rate_debuff"), v.get<int>("debuff"), v.get<int>("role_debuff"),
-                v.get<int>("round"), v.get<int>("last_order") 
+                v.get<int>("rate_attr"), v.get<int>("attr"), v.get<int>("lvl_attr"), v.get<int>("role_attr"), 
+                v.get<int>("rate_debuff"), v.get<int>("debuff"), v.get<int>("role_debuff"),
+                v.get<int>("round"), v.get<int>("last_order"), v.get<int>("fixdmg") 
             };
         }
     };

@@ -1,12 +1,15 @@
 #include "script/ClassRegister.hh"
 #include "battle/Monster.hh"
 #include "battle/Skill.hh"
+#include "debuff/Debuff.hh"
+#include "crow/json.h"
 
 namespace
 {
     void register_monster(nua::Context& ctx)
     {
         ctx.setClass<Monster>(
+            "name", &Monster::name,
             "level", &Monster::level,
             "bs_hp", &Monster::bs_hp,
             "bs_atk", &Monster::bs_atk,
@@ -34,15 +37,19 @@ namespace
     void register_skill(nua::Context& ctx)
     {
         ctx.setClass<Skill>(
+            "name", &Skill::name,
             "skill_class", &Skill::skill_class,
             "type", &Skill::type,
-            "power", &Skill::power
+            "power", &Skill::power,
+            "fixdmg", &Skill::fixdmg
         );   
     }
 }
 
 void ClassRegister::register_all(nua::Context& ctx)
 {
+    ctx.setClass<crow::json::wvalue>();
+    ctx.setClass<Debuff>("apply", &Debuff::apply);
     register_monster(ctx);   
     register_skill(ctx);   
 }

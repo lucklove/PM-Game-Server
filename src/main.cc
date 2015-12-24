@@ -3,7 +3,6 @@
 #include "storage/SkillDB.hh"
 #include "storage/LevelDB.hh"
 #include "battle/attack.hh"
-#include "battle/Round.hh"
 #include "storage/DebuffDB.hh"
 #include "utils/ScopeGuard.hh"
 
@@ -55,25 +54,24 @@ static auto handle_attack(const crow::request& req, int battle_id)
 
     auto& role_res = result["role"]; 
     auto& enemy_res = result["enemy"]; 
+    auto& lua_ctx = Lua::context();
 
-    Round round;
     if(AttackOrder::is_first(role_pm, enemy_pm, role_skill, enemy_skill))
     {
         result["firstMove"] = "role";
-        round.onFirstDebuff(Tick::tick_debuff, role_res, round, role_pm);
-        round.onFirstAttack(Attack::do_attack, role_res, enemy_res, role_pm, enemy_pm, role_skill);
-        round.onLastDebuff(Tick::tick_debuff, enemy_res, round, enemy_pm);
-        round.onLastAttack(Attack::do_attack, enemy_res, role_res, enemy_pm, role_pm, enemy_skill);
+        if(lua_ctx["tickDebuff"](std::ref(role_res), std::ref(role_pm)).get<bool>())
+            Attack::do_attack(role_res, enemy_res, role_pm, enemy_pm, role_skill);
+        if(lua_ctx["tickDebuff"](std::ref(enemy_res), std::ref(enemy_pm)).get<bool>())
+            Attack::do_attack(enemy_res, role_res, enemy_pm, role_pm, enemy_skill);
     }
     else
     {
         result["firstMove"] = "enemy";
-        round.onFirstDebuff(Tick::tick_debuff, enemy_res, round, enemy_pm);
-        round.onFirstAttack(Attack::do_attack, enemy_res, role_res, enemy_pm, role_pm, enemy_skill);
-        round.onLastDebuff(Tick::tick_debuff, role_res, round, role_pm);
-        round.onLastAttack(Attack::do_attack, role_res, enemy_res, role_pm, enemy_pm, role_skill);
+        if(lua_ctx["tickDebuff"](std::ref(enemy_res), std::ref(enemy_pm)).get<bool>())
+            Attack::do_attack(enemy_res, role_res, enemy_pm, role_pm, enemy_skill);
+        if(lua_ctx["tickDebuff"](std::ref(role_res), std::ref(role_pm)).get<bool>())
+            Attack::do_attack(role_res, enemy_res, role_pm, enemy_pm, role_skill);
     }
-    round.apply();
 
     result["result"] = true;
 
@@ -91,9 +89,12 @@ static auto handle_attack(const crow::request& req, int battle_id)
 
 int main()
 {
+    /** 测试lua环境是否正常 */
+    Lua::context().load("src/script/test.lua");
+
     crow::SimpleApp app;
 
     CROW_ROUTE(app, "/battle/<int>/<int>")(handle_battle_initiate);
     CROW_ROUTE(app, "/attack/<int>").methods("POST"_method)(handle_attack);
-    app.port(8080).run();
+    app.port(8080).multithreaded().run();
 }

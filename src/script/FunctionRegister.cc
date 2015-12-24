@@ -2,6 +2,7 @@
 #include "storage/MonsterDB.hh"
 #include "storage/SkillDB.hh"
 #include "storage/AioiDB.hh"
+#include "storage/DebuffDB.hh"
 
 namespace
 {
@@ -29,6 +30,14 @@ namespace
             return AioiDB::get(ta, tb);
         };
     }
+
+    void register_debuff_db(nua::Context& ctx)
+    {
+        ctx["get_debuff"] = [](int id) -> Debuff&
+        {
+            return *DebuffDB::get(id);
+        };
+    }
 }
 
 void FunctionRegister::register_all(nua::Context& ctx)
@@ -36,4 +45,5 @@ void FunctionRegister::register_all(nua::Context& ctx)
     register_db<MonsterDB>(ctx, "monster");
     register_db<SkillDB>(ctx, "skill");
     register_aioi_db(ctx);
+    register_debuff_db(ctx);
 }
