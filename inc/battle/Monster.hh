@@ -4,7 +4,6 @@
 #include <array>
 #include "cereal/archives/json.hpp"
 #include "cereal/types/array.hpp"
-#include "storage/SkillDB.hh"
 #include "script/Lua.hh"
 
 struct Monster
@@ -79,7 +78,7 @@ struct Monster
        iarchive(*this); 
     }
 
-    Optional<Skill> peekSkill()
+    int peekSkill()
     {
         static int turn = 0;
         turn %= 4;
@@ -87,23 +86,10 @@ struct Monster
         {
             turn = 0;
             if(skills[0] == 0)
-                throw std::logic_error{"monster has no skill"};
+                return 0;
         }
-        return SkillDB::get(skills[turn]);
+        return skills[turn];
     }
-
-    /** 初始化临时属性 */
-    void init()
-    {
-        Lua::context()["initMonsterHP"](std::ref(*this));
-        updateAttr();
-    }
-
-    /** 更新除cur_hp外用于前端显示的临时属性 */
-    void updateAttr()
-    {
-        Lua::context()["updateMonsterAttr"](std::ref(*this));
-    } 
 };
 
 namespace soci

@@ -1,90 +1,43 @@
 #include "crow/crow.h"
-#include "storage/BattleDB.hh"
-#include "storage/SkillDB.hh"
-#include "storage/LevelDB.hh"
-#include "battle/attack.hh"
-#include "storage/DebuffDB.hh"
-#include "utils/ScopeGuard.hh"
+#include "script/Lua.hh"
+#include "result/Result.hh"
+#include "exception/StorageException.hh"
 
-static auto handle_battle_initiate(int p_pm_id, int s_pm_id)
+static auto handle_battle_initiate(int role_id, int enemy_id)
 {
-    crow::json::wvalue result;
-    auto battle_opt = Battle::launch(p_pm_id, s_pm_id);
-    if(!battle_opt)
-    {
-        result["result"] = false;
-        result["error"] = "invalid pm id";
+    crow::json::wvalue res;
+
+    try
+    {    
+        Result result{res};
+        Lua::context()["handleBattle"](result, role_id, enemy_id);
     }
-    else
+    catch(StorageException& e)
     {
-        const Battle& b = *battle_opt;
-        result["result"] = true;
-        result["battle_id"] = std::to_string(b.id);
-        BattleDB::set(b.id, b);
+        res["error"] = e.what();
     }
-    return result;
+
+    return res;
 }
 
 static auto handle_attack(const crow::request& req, int battle_id)
 {
     auto x = crow::json::load(req.body);
     if(!x) return crow::response(400);
+    crow::json::wvalue res;
 
-    crow::json::wvalue result;
-    auto battle_opt = BattleDB::get(battle_id);
-    if(!battle_opt)
+    try
     {
-        result["result"] = false;
-        result["error"] = "invalid battle id";
-        return crow::response{result};;
+        Result result{res};
+        int skill_id = x["skill"].i();
+        Lua::context()["handleAttack"](result, battle_id, skill_id);
     }
-    Monster& role_pm = battle_opt->role_pm;
-    Monster& enemy_pm = battle_opt->enemy_pm;
-    
-    auto role_s_opt = SkillDB::get(x["skill"].i());
-    auto enemy_s_opt = enemy_pm.peekSkill();
-    if(!role_s_opt || !enemy_s_opt)
+    catch(StorageException& e)
     {
-        result["result"] = false;
-        result["error"] = "selected skill not exist(role or enemy)";
-        return crow::response{result};
-    }
-    Skill& role_skill = *role_s_opt;
-    Skill& enemy_skill = *enemy_s_opt;
-
-    auto& role_res = result["role"]; 
-    auto& enemy_res = result["enemy"]; 
-    auto& lua_ctx = Lua::context();
-
-    if(AttackOrder::is_first(role_pm, enemy_pm, role_skill, enemy_skill))
-    {
-        result["firstMove"] = "role";
-        if(lua_ctx["tickDebuff"](std::ref(role_res), std::ref(role_pm)).get<bool>())
-            Attack::do_attack(role_res, enemy_res, role_pm, enemy_pm, role_skill);
-        if(lua_ctx["tickDebuff"](std::ref(enemy_res), std::ref(enemy_pm)).get<bool>())
-            Attack::do_attack(enemy_res, role_res, enemy_pm, role_pm, enemy_skill);
-    }
-    else
-    {
-        result["firstMove"] = "enemy";
-        if(lua_ctx["tickDebuff"](std::ref(enemy_res), std::ref(enemy_pm)).get<bool>())
-            Attack::do_attack(enemy_res, role_res, enemy_pm, role_pm, enemy_skill);
-        if(lua_ctx["tickDebuff"](std::ref(role_res), std::ref(role_pm)).get<bool>())
-            Attack::do_attack(role_res, enemy_res, role_pm, enemy_pm, role_skill);
+        res["error"] = e.what();
     }
 
-    result["result"] = true;
-
-    if(role_pm.cur_hp > 0 && enemy_pm.cur_hp > 0)
-    {
-        BattleDB::set(battle_opt->id, *battle_opt);
-    }
-    else
-    {
-        BattleDB::del(battle_opt->id);
-    }
-
-    return crow::response{result};
+    return crow::response{res};
 }
 
 int main()

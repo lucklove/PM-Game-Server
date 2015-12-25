@@ -1,12 +1,12 @@
 #pragma once
 #include "battle/Monster.hh"
 #include "utils/Random.hh"
-#include "crow/json.h"
+#include "result/Result.hh"
 #include <vector>
 
 struct Debuff
 {
-    virtual bool apply(crow::json::wvalue& result, Monster& m) const = 0;
+    virtual bool apply(Result result, Monster& m) const = 0;
     virtual ~Debuff() = default;
 };
 
@@ -18,11 +18,11 @@ struct ConcretDebuff : Debuff           /**< 禁止构造实例 */
 template <>
 struct ConcretDebuff<1> : Debuff        /**< 麻痹 */
 {
-    bool apply(crow::json::wvalue& result, Monster& m) const override
+    bool apply(Result result, Monster& m) const override
     {
         if(Random::get(0, 100) <= 25)
         {
-            result["sleep"] = true;
+            result.set("sleep", true);
             return false;
         }
         return true;
@@ -32,10 +32,10 @@ struct ConcretDebuff<1> : Debuff        /**< 麻痹 */
 template <>
 struct ConcretDebuff<2> : Debuff        /**< 中毒 */
 {
-    bool apply(crow::json::wvalue& result, Monster& m) const override
+    bool apply(Result result, Monster& m) const override
     {
         int max_hp = m.level * m.bs_hp / 50 + m.ev_hp / 4 + 10 + m.level;
-        result["debuff_harm"] = max_hp * 0.125;
+        result.set("debuff_harm", max_hp * 0.125);
         m.cur_hp -= max_hp * 0.125;
         return true;
     }    
@@ -44,7 +44,7 @@ struct ConcretDebuff<2> : Debuff        /**< 中毒 */
 template <>
 struct ConcretDebuff<3> : Debuff        /**< 睡眠 */
 {
-    bool apply(crow::json::wvalue& result, Monster& m) const override
+    bool apply(Result result, Monster& m) const override
     {
         return false;
     }
@@ -53,7 +53,7 @@ struct ConcretDebuff<3> : Debuff        /**< 睡眠 */
 template <>
 struct ConcretDebuff<4> : Debuff        /**< 冰冻 */
 {
-    bool apply(crow::json::wvalue& result, Monster& m) const override
+    bool apply(Result result, Monster& m) const override
     {
         return false;
     }
@@ -62,10 +62,10 @@ struct ConcretDebuff<4> : Debuff        /**< 冰冻 */
 template <>
 struct ConcretDebuff<5> : Debuff        /**< 烧伤 */
 {
-    bool apply(crow::json::wvalue& result, Monster& m) const override
+    bool apply(Result result, Monster& m) const override
     {
         int max_hp = m.level * m.bs_hp / 50 + m.ev_hp / 4 + 10 + m.level;
-        result["debuff_harm"] = max_hp * 0.0625;
+        result.set("debuff_harm", max_hp * 0.0625);
         m.cur_hp -= max_hp * 0.0625;
         return true;
     }
@@ -74,7 +74,7 @@ struct ConcretDebuff<5> : Debuff        /**< 烧伤 */
 template <>
 struct ConcretDebuff<6> : Debuff        /**< 害怕 */
 {
-    bool apply(crow::json::wvalue& result, Monster& m) const override
+    bool apply(Result result, Monster& m) const override
     {
         return false;
     }
