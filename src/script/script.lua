@@ -216,3 +216,16 @@ function handleAttack(result, battle_id, skill_id)
         del_battle(battle_id)
     end
 end
+
+function handleBattle(result, role_id, enemy_id)
+    local role_pm = get_monster(role_id)
+    local enemy_pm = get_monster(enemy_id)
+    initMonsterHP(role_pm)
+    updateMonsterAttr(role_pm)
+    initMonsterHP(enemy_pm)
+    updateMonsterAttr(enemy_pm)
+    local battle = launch_battle(role_pm, enemy_pm)
+    set_battle(battle:id(), battle)
+    result:setb("result", true)
+    result:seti("battle_id", battle:id())
+end
