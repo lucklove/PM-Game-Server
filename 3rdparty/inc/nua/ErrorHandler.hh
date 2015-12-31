@@ -1,16 +1,16 @@
 #pragma once
-#include <lua.hpp>
-#include <stdexcept>
-#include <string>
+/**
+ * \need:
+ *      ExceptionHolder.hh for class ExceptionHolder
+ */
 
 namespace nua
 {
     struct ErrorHandler
     {
     private:
-        static int error_handler(lua_State* l)
+        static int traceback(lua_State* l) noexcept
         {
-            /** trace back */
             const char* msg = "<not set>";
             if(!lua_isnil(l, -1))
             {
@@ -38,7 +38,7 @@ namespace nua
                 if(reason == nullptr)
                     reason = "<unknown panic raason>";
             }
-           
+    
             lua_pop(l, lua_gettop(l));
             throw std::runtime_error{reason};
         }
@@ -47,6 +47,8 @@ namespace nua
         [[noreturn]]
         static void handle(lua_State* l, int status_code)
         {
+            ExceptionHolder::check();
+
             if(lua_isstring(l, -1))
             {
                 throw std::runtime_error{lua_tostring(l, -1)};
@@ -62,7 +64,7 @@ namespace nua
 
         static int set_error_handler(lua_State* l)
         {
-            lua_pushcfunction(l, error_handler);
+            lua_pushcfunction(l, traceback);
             return lua_gettop(l);
         }
 

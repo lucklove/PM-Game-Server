@@ -17,6 +17,9 @@ struct Lua
             ClassRegister::register_all(ctx_);   
             FunctionRegister::register_all(ctx_);   
             ctx_.load("src/script/script.lua"); 
+            ctx_.load("src/script/battle.lua"); 
+            ctx_.load("src/script/attack.lua"); 
+            ctx_.load("src/script/debuff.lua"); 
         }
 
         nua::Context& getContext()

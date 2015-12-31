@@ -171,7 +171,7 @@ function tickDebuff(r, m)
     local remove = false
     if(m:debuff_cur() ~= 0) then
         local d = get_debuff(m:debuff_cur())
-        cont = d:apply(r, m)
+        cont = d(r, m)
         m:set_debuff_round(m:debuff_round() - 1)
         if(m:debuff_round() == 0) then
             m:set_debuff_cur(0)

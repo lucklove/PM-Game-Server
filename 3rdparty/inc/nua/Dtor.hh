@@ -1,5 +1,8 @@
 #pragma once
-#include "BaseFunc.hh"
+/**
+ * \need:
+ *      BaseFunc.hh for class BaseFunc
+ */
 
 namespace nua
 {

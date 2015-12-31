@@ -6,7 +6,6 @@ SET(TEST_SOURCES
     aioi_db.cc
     cereal.cc
     monster_memory_test.cc
-    round.cc
     debuff_db.cc
     ../src/script/ClassRegister.cc
     ../src/script/FunctionRegister.cc

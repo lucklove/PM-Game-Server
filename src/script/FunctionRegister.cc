@@ -2,9 +2,8 @@
 #include "storage/MonsterDB.hh"
 #include "storage/SkillDB.hh"
 #include "storage/AioiDB.hh"
-#include "storage/DebuffDB.hh"
 #include "storage/BattleDB.hh"
-#include "exception/StorageException.hh"
+#include "exception/LuaException.hh"
 
 namespace
 {
@@ -26,14 +25,6 @@ namespace
         ctx["get_aioi"] = [](int ta, int tb) -> double
         {
             return AioiDB::get(ta, tb);
-        };
-    }
-
-    void register_debuff_db(nua::Context& ctx)
-    {
-        ctx["get_debuff"] = [](int id) -> Debuff&
-        {
-            return *DebuffDB::get(id);
         };
     }
 
@@ -59,13 +50,28 @@ namespace
 
         ctx["launch_battle"] = &Battle::launch;
     }
+
+    void register_throw(nua::Context& ctx)
+    {
+        ctx["throw"] = [](std::string exception_name, std::string what)
+        {
+            if(exception_name == "lua")
+            {
+                throw LuaException(what);
+            }
+            else
+            {
+                throw UnknownLuaException(what);                
+            }
+        };
+    }
 }
 
 void FunctionRegister::register_all(nua::Context& ctx)
 {
+    register_throw(ctx);
     register_db<MonsterDB>(ctx, "monster");
     register_db<SkillDB>(ctx, "skill");
     register_aioi_db(ctx);
-    register_debuff_db(ctx);
     register_battle_db(ctx);
 }

@@ -1,7 +1,7 @@
 #include "crow/crow.h"
 #include "script/Lua.hh"
 #include "result/Result.hh"
-#include "exception/StorageException.hh"
+#include "exception/LuaException.hh"
 
 static auto handle_battle_initiate(int role_id, int enemy_id)
 {
@@ -12,7 +12,7 @@ static auto handle_battle_initiate(int role_id, int enemy_id)
         Result result{res};
         Lua::context()["handleBattle"](result, role_id, enemy_id);
     }
-    catch(StorageException& e)
+    catch(LuaException& e)
     {
         res["error"] = e.what();
     }
@@ -32,7 +32,7 @@ static auto handle_attack(const crow::request& req, int battle_id)
         int skill_id = x["skill"].i();
         Lua::context()["handleAttack"](result, battle_id, skill_id);
     }
-    catch(StorageException& e)
+    catch(LuaException& e)
     {
         res["error"] = e.what();
     }

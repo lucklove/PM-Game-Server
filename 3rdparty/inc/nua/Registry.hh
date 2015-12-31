@@ -1,9 +1,9 @@
 #pragma once
-#include <lua.hpp>
-#include <memory>
-#include "MetatableRegistry.hh"
-#include "Func.hh"
-#include "Class.hh"
+/**
+ * \need:
+ *      Func.hh for template class Func
+ *      Class.hh for template class Class
+ */
 
 namespace nua
 {

@@ -1,12 +1,12 @@
 #pragma once
-#include <lua.hpp>
-#include <string>
-#include <vector>
-#include <tuple>
-#include "LuaRef.hh"
-#include "stack.hh"
-#include "Func.hh"
-#include "Registry.hh"
+/**
+ * \need:
+ *      LuaRef.hh for class LuaRef
+ *      stack.hh for stack operations
+ *      Registry.hh for class Registry
+ *      utils.hh for function make_lua_ref
+ *      StackGuard for class StackGuard 
+ */
 
 namespace nua
 {
@@ -32,7 +32,6 @@ namespace nua
         
         void evaluate_function_call(int num_results)
         {
-
             if(!functor_active_)
                 return;
             functor_active_ = false;
@@ -56,19 +55,12 @@ namespace nua
         template <typename FuncT>
         void evaluate_store(FuncT&& push_func)
         {
-            stack::StackGuard sg{l_};
+            StackGuard sg{l_};
             lua_pushglobaltable(l_);
             key_->push();
             push_func();
             lua_settable(l_, -3);
             lua_pop(l_, 1);
-        }
-
-        template <typename... Args, size_t... Is>
-        static std::tuple<Args...> get_n(lua_State* l, std::index_sequence<Is...>)
-        {
-            ScopeGuard sg([l]{ lua_pop(l, int(sizeof...(Is))); });
-            return std::tuple<Args...>(stack::get<Args>(l, int(Is - sizeof...(Is)))...);
         }
 
         template <typename L>
@@ -102,7 +94,7 @@ namespace nua
 
     public:
         Selector(lua_State* l, Registry* registry, const std::string& name)
-            : l_{l}, name_{name}, registry_{registry}, key_{make_lua_ref(l, name)}
+            : l_{l}, name_{name}, registry_{registry}, key_{utils::make_lua_ref(l, name)}
         {}
 
         Selector(const Selector& other) = default;
@@ -117,7 +109,7 @@ namespace nua
         Selector operator()(Args... args)
         {
             Selector copy{*this};
-            copy.functor_arguments_ = make_lua_refs(l_, args...);
+            copy.functor_arguments_ = utils::make_lua_refs(l_, args...);
             copy.functor_active_ = true;
             return copy;
         }
@@ -155,14 +147,14 @@ namespace nua
 
         void get()
         {
-            stack::StackGuard sg{l_};
+            StackGuard sg{l_};
             evaluate_retrieve(0);
         }
 
         template <typename T>
         T get()
         {
-            stack::StackGuard sg{l_};
+            StackGuard sg{l_};
             evaluate_retrieve(1);
             return stack::pop<T>(l_);
         }
@@ -170,9 +162,9 @@ namespace nua
         template <typename T1, typename T2, typename... Args>
         std::tuple<T1, T2, Args...> get()
         {
-            stack::StackGuard sg{l_};
+            StackGuard sg{l_};
             evaluate_retrieve(sizeof...(Args) + 2);
-            return get_n<T1, T2, Args...>(l_, std::make_index_sequence<sizeof...(Args) + 2>());
+            return utils::get_n<T1, T2, Args...>(l_, std::make_index_sequence<sizeof...(Args) + 2>());
         }
     };
 }

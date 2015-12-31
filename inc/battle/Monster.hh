@@ -94,7 +94,7 @@ struct Monster
 
 namespace soci
 {
-    template<>
+    template <>
     struct type_conversion<Monster>
     {
         typedef values base_type;

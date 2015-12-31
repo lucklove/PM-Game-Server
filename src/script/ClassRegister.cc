@@ -2,7 +2,6 @@
 #include "battle/Monster.hh"
 #include "battle/Skill.hh"
 #include "battle/Battle.hh"
-#include "debuff/Debuff.hh"
 #include "result/Result.hh"
 #include "crow/json.h"
 
@@ -31,11 +30,14 @@ namespace
             "cur_satk", &Monster::cur_satk,
             "cur_sdef", &Monster::cur_sdef,
             "cur_spd", &Monster::cur_spd,
+            "atk_lv", &Monster::atk_lv,
             "crit_lv", &Monster::crit_lv,
             "acc_lv", &Monster::acc_lv,
             "type1", &Monster::type1,
             "type2", &Monster::type2,
             "debuff_cur", &Monster::debuff_cur,
+            "debuff_round", &Monster::debuff_round,
+            "ability", &Monster::ability,
             "peekSkill", &Monster::peekSkill
         );
     }
@@ -48,10 +50,15 @@ namespace
             "type", &Skill::type,
             "acc", &Skill::acc,
             "power", &Skill::power,
+            "attr", &Skill::attr,
+            "lvl_attr", &Skill::lvl_attr,
             "rate_attr", &Skill::rate_attr,
+            "role_attr", &Skill::role_attr,
+            "debuff", &Skill::debuff,
             "role_debuff", &Skill::role_debuff,
             "rate_debuff", &Skill::rate_debuff,
             "last_order", &Skill::last_order,
+            "round", &Skill::round,
             "fixdmg", &Skill::fixdmg
         );   
     }
@@ -80,7 +87,6 @@ namespace
 void ClassRegister::register_all(nua::Context& ctx)
 {
     ctx.setClass<crow::json::wvalue>();
-    ctx.setClass<Debuff>("apply", &Debuff::apply);
     register_monster(ctx);   
     register_skill(ctx);
     register_result(ctx); 

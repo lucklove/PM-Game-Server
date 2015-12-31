@@ -1,11 +1,10 @@
 #pragma once
-#include <stdexcept>
-#include <lua.hpp>
-#include <string>
-#include "stack.hh"
-#include "ErrorHandler.hh"
-#include "Selector.hh"
-#include "Registry.hh"
+/**
+ * \need:
+ *      Selector.hh for class Selector
+ *      ErrorHandler for class ErrorHandler
+ *      Registry.hh for class Registry
+ */
 
 namespace nua
 {
@@ -22,7 +21,7 @@ namespace nua
             if(lua_ctx_ == nullptr)
                 throw std::runtime_error{"initialize lua context failed"};
 
-//            ErrorHandler::set_atpanic(lua_ctx_);
+            ErrorHandler::set_atpanic(lua_ctx_);
 
             registry_ = std::make_unique<Registry>(lua_ctx_); 
  
@@ -43,10 +42,10 @@ namespace nua
 
         void operator()(const char* code)
         {
-            stack::StackGuard sg{lua_ctx_};
+            StackGuard sg{lua_ctx_};
             
             int status = luaL_dostring(lua_ctx_, code);
-            if(status)
+            if(status != LUA_OK)
                 ErrorHandler::handle(lua_ctx_, status);
         }
 
@@ -57,17 +56,14 @@ namespace nua
 
         void load(const std::string& file)
         {
-            stack::StackGuard sg{lua_ctx_};
+            StackGuard sg{lua_ctx_};
            
             int status = luaL_loadfile(lua_ctx_, file.c_str()); 
-            if(status)
-            {
-                ErrorHandler::handle(lua_ctx_, status);
-                return;
-            }
+            if(status != LUA_OK)
+                ErrorHandler::handle(lua_ctx_, status);     /**< handle is noreturn */
 
             status = lua_pcall(lua_ctx_, 0, LUA_MULTRET, 0);
-            if(status)
+            if(status != LUA_OK)
                 ErrorHandler::handle(lua_ctx_, status);
         }
 
@@ -82,6 +78,7 @@ namespace nua
         {
             registry_->registerClass<T>(lua_ctx_, funcs...);   
             registry_->registerClass<std::reference_wrapper<T>>(lua_ctx_, funcs...);   
+            registry_->registerClass<std::reference_wrapper<const T>>(lua_ctx_, funcs...);   
         }
     };
 }
