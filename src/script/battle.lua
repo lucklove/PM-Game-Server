@@ -1,0 +1,13 @@
+function handleBattle(result, role_id, enemy_id)
+    local role_pm = get_monster(role_id)
+    local enemy_pm = get_monster(enemy_id)
+    init_monster_hp(role_pm)
+    update_monster_attr(role_pm)
+    init_monster_hp(enemy_pm)
+    update_monster_attr(enemy_pm)
+    before_battle(role_pm, enemy_pm)
+    local battle = launch_battle(role_pm, enemy_pm)
+    set_battle(battle:id(), battle)
+    result:setb("result", true)
+    result:seti("battle_id", battle:id())
+end

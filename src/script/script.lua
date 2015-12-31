@@ -1,14 +1,15 @@
-mod_skill_power = 1.0
-
-mod_type_value = 0.5
-
-mod_weather_eff = 1.0
-
-mod_dmg_ability = 1.0
-
-fix_dmg = 0.0
-
 math.randomseed(os.time())
+
+--战前特性判定
+function before_battle(pm_a, pm_b)
+    --TODO: 处理战前技能
+end
+
+--初始化PM的HP
+function init_monster_hp(m)
+    m:set_cur_hp(math.ceil(m:level() * m:bs_hp() / 50 + m:ev_hp() / 4 + 10 + m:level()))
+end
+
 
 --判断先攻后攻
 function is_first(ma, mb, sa, sb)
@@ -22,13 +23,8 @@ function is_first(ma, mb, sa, sb)
     end
 end
 
---初始化PM的HP
-function initMonsterHP(m)
-    m:set_cur_hp(math.ceil(m:level() * m:bs_hp() / 50 + m:ev_hp() / 4 + 10 + m:level()))
-end
-
 --初始化PM的各项属性
-function updateMonsterAttr(m)
+function update_monster_attr(m)
     m:set_cur_atk(math.ceil(m:level() * m:bs_atk() / 50 + m:ev_atk() / 4 + 5))
     m:set_cur_def(math.ceil(m:level() * m:bs_def() / 50 + m:ev_def() / 4 + 5))
     m:set_cur_satk(math.ceil(m:level() * m:bs_satk() / 50 + m:ev_satk() / 4 + 5))
@@ -71,7 +67,7 @@ function is_hit(m, s)
 end
 
 --技能导致能力变化
-function change_attr(m, s)
+function change_attr_by_skill(m, s)
     local limit = function(num)
         if(num > 6) then
             return 6
@@ -79,8 +75,8 @@ function change_attr(m, s)
         if(num < -6) then
             return -6
         end
+        return num;
     end
-    
     local attrs = {
         [1] = function() m:set_atk_lv(limit(m:atk_lv() + s:lvl_attr())) end,
         [2] = function() m:set_def_lv(limit(m:def_lv() + s:lvl_attr())) end,
@@ -90,13 +86,17 @@ function change_attr(m, s)
         [6] = function() m:set_acc_lv(limit(m:acc_lv() + s:lvl_attr())) end,
         [7] = function() m:set_crit_lv(limit(m:crit_lv() + s:lvl_attr())) end,
     }
-    
+   
+    if(s:attr() < 1 or s:attr() > 7) then
+        throw("lua", "no such attr")
+    end
+ 
     attrs[s:attr()]()
-    updateMonsterAttr(m)
+    update_monster_attr(m)
 end
 
 --计算一个PM通过特定技能攻击另一个PM时造成的伤害
-function monsterAttack(res_a, res_b, monster_a, monster_b, skill)
+function monster_attack(res_a, res_b, monster_a, monster_b, skill)
     if(not is_hit(monster_a, skill)) then
         res_a:setb("hit", false)
         return
@@ -125,16 +125,16 @@ function monsterAttack(res_a, res_b, monster_a, monster_b, skill)
         * (monster_a:cur_atk() * is_physical_skill + monster_a:cur_satk() * (1 - is_physical_skill))
         / (monster_b:cur_def() * is_physical_skill + monster_b:cur_sdef() * (1 - is_physical_skill))
         / 50 + 2
-    ) * math.random(217, 255) / 255.0 * (1 + multi) * (1 + is_same_type * mod_type_value) * mod_type_aioi
-    * mod_weather_eff * mod_dmg_ability + skill:fixdmg();
+    ) * math.random(217, 255) / 255.0 * (1 + multi) * (1 + is_same_type * 0.5) * mod_type_aioi
+    + skill:fixdmg();
 
     --执行实际的伤害
     res_a:setn("hurt", hurt)
     monster_b:set_cur_hp(math.ceil(monster_b:cur_hp() - hurt))
     res_b:setn("hp", monster_b:cur_hp())
     
-    updateMonsterAttr(monster_a)
-    updateMonsterAttr(monster_b)
+    update_monster_attr(monster_a)
+    update_monster_attr(monster_b)
 
     --技能导致能力变化
     if(math.random(0, 100) < skill:rate_attr()) then
@@ -142,12 +142,12 @@ function monsterAttack(res_a, res_b, monster_a, monster_b, skill)
             local attr = res_a:get("attr")
             attr:seti("type", skill:attr());
             attr:seti("value", skill:lvl_attr());
-            change_attr(monster_a, skill)
+            change_attr_by_skill(monster_a, skill)
         else
             local attr = res_b:get("attr")
             attr:seti("type", skill:attr())
             attr:seti("value", skill:lvl_attr())
-            change_attr(monster_b, skill)
+            change_attr_by_skill(monster_b, skill)
         end
     end
 
@@ -166,7 +166,7 @@ function monsterAttack(res_a, res_b, monster_a, monster_b, skill)
 end
 
 --debuff伤害逻辑
-function tickDebuff(r, m)
+function tick_debuff(r, m)
     local cont = true
     local remove = false
     if(m:debuff_cur() ~= 0) then
@@ -175,57 +175,10 @@ function tickDebuff(r, m)
         m:set_debuff_round(m:debuff_round() - 1)
         if(m:debuff_round() == 0) then
             m:set_debuff_cur(0)
-            remove = true
+            r:setb("remove", true);
+            return cond;
         end
+        r:setb("remove", false)
     end
-    return cont, remove
-end
-
-function handleAttack(result, battle_id, skill_id)
-    local battle = get_battle(battle_id)
-    local role_pm = battle:role_pm()
-    local enemy_pm = battle:enemy_pm()
-    local role_skill = get_skill(skill_id)
-    local enemy_skill = get_skill(enemy_pm:peekSkill())
-    local role_res = result:get("role")
-    local enemy_res = result:get("enemy")
-
-    if(is_first(role_pm, enemy_pm, role_skill, enemy_skill)) then
-        result:sets("firstMove", "role")
-        if(tickDebuff(role_res, role_pm)) then
-            monsterAttack(role_res, enemy_res, role_pm, enemy_pm, role_skill)     
-        end
-        if(tickDebuff(enemy_res, enemy_pm)) then
-            monsterAttack(enemy_res, role_res, enemy_pm, role_pm, enemy_skill)     
-        end
-    else
-        result:sets("firstMove", "enemy")
-        if(tickDebuff(enemy_res, enemy_pm)) then
-            monsterAttack(enemy_res, role_res, enemy_pm, role_pm, enemy_skill)     
-        end
-        if(tickDebuff(role_res, role_pm)) then
-            monsterAttack(role_res, enemy_res, role_pm, enemy_pm, role_skill)     
-        end
-    end
-
-    if(role_pm:cur_hp() > 0 and enemy_pm:cur_hp() > 0) then
-        battle:set_role_pm(role_pm)
-        battle:set_enemy_pm(enemy_pm)
-        set_battle(battle_id, battle)
-    else
-        del_battle(battle_id)
-    end
-end
-
-function handleBattle(result, role_id, enemy_id)
-    local role_pm = get_monster(role_id)
-    local enemy_pm = get_monster(enemy_id)
-    initMonsterHP(role_pm)
-    updateMonsterAttr(role_pm)
-    initMonsterHP(enemy_pm)
-    updateMonsterAttr(enemy_pm)
-    local battle = launch_battle(role_pm, enemy_pm)
-    set_battle(battle:id(), battle)
-    result:setb("result", true)
-    result:seti("battle_id", battle:id())
+    return cont
 end
