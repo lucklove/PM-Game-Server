@@ -1,13 +1,19 @@
 math.randomseed(os.time())
 
---战前特性判定
-function before_battle(pm_a, pm_b)
-    --TODO: 处理战前技能
+--计算monster的满血hp
+function full_hp(m)
+    return math.ceil(m:level() * m:bs_hp() / 50 + m:ev_hp() / 4 + 10 + m:level())
 end
 
 --初始化PM的HP
-function init_monster_hp(m)
-    m:set_cur_hp(math.ceil(m:level() * m:bs_hp() / 50 + m:ev_hp() / 4 + 10 + m:level()))
+function init_monster_attr(m)
+    m:set_cur_hp(full_hp(m))
+    m:set_mod_dmg_ability(1)
+    m:set_mod_acc_ability(1)
+    m:set_mod_type_value(0.5)
+    m:set_round_ability(0)
+    m:set_crit_multi(1)
+    m:set_mod_dodge(1)
 end
 
 
@@ -44,25 +50,25 @@ function calculate_crit_multi(m)
         crit_rate = rate[m:crit_lv() + 1]
     end
     if(math.random(0, 10000) <= crit_rate) then
-        return 1
+        return 1 * m:crit_multi()
     end
     return 0
 end
 
 --计算是否命中
-function is_hit(m, s)
+function is_hit(m_a, m_b, s)
     if(s:acc() == 1000) then        --当acc为1000时必中
         return true
     end
 
     local mod_acc_lv = 0
-    if(m:acc_lv() < 0) then
-        mod_acc_lv = 2.0 / (2 - m:acc_lv())        
+    if(m_a:acc_lv() < 0) then
+        mod_acc_lv = 2.0 / (2 - m_a:acc_lv())        
     else
-        mod_acc_lv = (m:acc_lv() + 2) / 2.0
+        mod_acc_lv = (m_a:acc_lv() + 2) / 2.0
     end
 
-    local acc_final = s:acc() * mod_acc_lv
+    local acc_final = s:acc() * mod_acc_lv * m_a:mod_acc_ability() * m_b:mod_dodge()
     return math.random(0, 100) <= acc_final
 end
 
@@ -97,7 +103,7 @@ end
 
 --计算一个PM通过特定技能攻击另一个PM时造成的伤害
 function monster_attack(res_a, res_b, monster_a, monster_b, skill)
-    if(not is_hit(monster_a, skill)) then
+    if(not is_hit(monster_a, monster_b, skill)) then
         res_a:setb("hit", false)
         return
     end 
@@ -125,8 +131,8 @@ function monster_attack(res_a, res_b, monster_a, monster_b, skill)
         * (monster_a:cur_atk() * is_physical_skill + monster_a:cur_satk() * (1 - is_physical_skill))
         / (monster_b:cur_def() * is_physical_skill + monster_b:cur_sdef() * (1 - is_physical_skill))
         / 50 + 2
-    ) * math.random(217, 255) / 255.0 * (1 + multi) * (1 + is_same_type * 0.5) * mod_type_aioi
-    + skill:fixdmg();
+    ) * math.random(217, 255) / 255.0 * (1 + multi) * (1 + is_same_type * monster_a:mod_type_value())
+    * mod_type_aioi * monster_a:mod_dmg_ability() + skill:fixdmg();
 
     --执行实际的伤害
     res_a:setn("hurt", hurt)
@@ -161,7 +167,7 @@ function monster_attack(res_a, res_b, monster_a, monster_b, skill)
     
     if(math.random(0, 100) < skill:rate_debuff() and pm:debuff_cur() == 0) then
         pm:set_debuff_cur(skill:debuff())    
-        pm:set_debuff_round(skill:round())    
+        pm:set_debuff_round(skill:round() + pm:round_ability())    
     end
 end
 

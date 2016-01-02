@@ -31,13 +31,22 @@ namespace
             "cur_sdef", &Monster::cur_sdef,
             "cur_spd", &Monster::cur_spd,
             "atk_lv", &Monster::atk_lv,
+            "def_lv", &Monster::def_lv,
+            "satk_lv", &Monster::satk_lv,
+            "sdef_lv", &Monster::sdef_lv,
             "crit_lv", &Monster::crit_lv,
             "acc_lv", &Monster::acc_lv,
             "type1", &Monster::type1,
             "type2", &Monster::type2,
+            "crit_multi", &Monster::crit_multi,
             "debuff_cur", &Monster::debuff_cur,
             "debuff_round", &Monster::debuff_round,
             "ability", &Monster::ability,
+            "round_ability", &Monster::round_ability,
+            "mod_dmg_ability", &Monster::mod_dmg_ability,
+            "mod_acc_ability", &Monster::mod_acc_ability,
+            "mod_type_value", &Monster::mod_type_value,
+            "mod_dodge", &Monster::mod_dodge,
             "peekSkill", &Monster::peekSkill
         );
     }

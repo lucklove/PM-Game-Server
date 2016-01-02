@@ -10,17 +10,21 @@ function handleAttack(result, battle_id, skill_id)
     if(is_first(role_pm, enemy_pm, role_skill, enemy_skill)) then
         result:sets("firstMove", "role")
         if(tick_debuff(role_res, role_pm)) then
+            before_skill(role_pm, role_skill)
             monster_attack(role_res, enemy_res, role_pm, enemy_pm, role_skill)     
         end
         if(tick_debuff(enemy_res, enemy_pm)) then
+            before_skill(enemy_pm, enemy_skill)
             monster_attack(enemy_res, role_res, enemy_pm, role_pm, enemy_skill)     
         end
     else
         result:sets("firstMove", "enemy")
         if(tick_debuff(enemy_res, enemy_pm)) then
+            before_skill(enemy_pm, enemy_skill)
             monster_attack(enemy_res, role_res, enemy_pm, role_pm, enemy_skill)     
         end
         if(tick_debuff(role_res, role_pm)) then
+            before_skill(role_pm, role_skill)
             monster_attack(role_res, enemy_res, role_pm, enemy_pm, role_skill)     
         end
     end

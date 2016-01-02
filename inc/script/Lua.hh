@@ -20,6 +20,7 @@ struct Lua
             ctx_.load("src/script/battle.lua"); 
             ctx_.load("src/script/attack.lua"); 
             ctx_.load("src/script/debuff.lua"); 
+            ctx_.load("src/script/ability.lua"); 
         }
 
         nua::Context& getContext()
