@@ -1,9 +1,8 @@
 #pragma once
 #include "Storage.hh"
+#include "DBConnectionPool.hh"
 #include "storage_factory.hh"
 #include "battle/Skill.hh"
-#include <soci/soci.h>
-#include <soci/mysql/soci-mysql.h>
 
 struct SkillMemoryStorage
 {
@@ -47,8 +46,8 @@ struct SkillPersistentStorage
     {
         Skill s = { 0 };
 
-        soci::session sql(soci::mysql, "db=pocket_monster_db user=root pass=lucklove");
-        sql << "select * from skill where id=:ID", soci::into(s), soci::use(id);
+        auto connection = DBConnectionPool::get_connection();
+        connection->session << "select * from skill where id=:ID", soci::into(s), soci::use(id);
 
         if(s.id != 0)
         { 
