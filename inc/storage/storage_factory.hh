@@ -1,7 +1,7 @@
 #pragma once
 #include "Storage.hh"
+#include "DBConnectionPool.hh"
 #include "utils/ScopeGuard.hh"
-#include <redox.hpp>
 #include <unordered_map>
 #include <mutex>
 
@@ -53,15 +53,10 @@ struct CacheStorage
 {
     static Optional<T> get(const std::string& filed, int id)
     {
-        redox::Redox rdx;
-        if(!rdx.connect("localhost", 6379))
-            return {};
-        ScopeGuard on_exit([&]{ rdx.disconnect(); });
-        
         try
         {
             Optional<T> item_opt;
-            std::string s = rdx.get(filed + ":" + std::to_string(id));
+            std::string s = get_redis_connection()->session.get(filed + ":" + std::to_string(id));
             T item;
             std::stringstream ss{s};
             item.from_stream(ss);
@@ -75,23 +70,13 @@ struct CacheStorage
 
     static void set(const std::string& filed, int id, const T& item)
     {
-        redox::Redox rdx;
-        if(!rdx.connect("localhost", 6379))
-            return;
-        ScopeGuard on_exit([&]{ rdx.disconnect(); });
-        
         std::stringstream ss;
         item.to_stream(ss);
-        rdx.set(filed + ":" + std::to_string(id), ss.str());
+        get_redis_connection()->session.set(filed + ":" + std::to_string(id), ss.str());
     }
 
     static void del(const std::string& filed, int id)
     {
-        redox::Redox rdx;
-        if(!rdx.connect("localhost", 6379))
-            return;
-        ScopeGuard on_exit([&]{ rdx.disconnect(); });
-
-        rdx.del(filed + ":" + std::to_string(id));
+        get_redis_connection()->session.del(filed + ":" + std::to_string(id));
     }
 };

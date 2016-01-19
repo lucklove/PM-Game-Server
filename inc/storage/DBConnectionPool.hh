@@ -1,18 +1,21 @@
 #pragma once
 #include <soci/soci.h>
 #include <soci/mysql/soci-mysql.h>
+#include <redox.hpp>
 #include <memory>
 #include <atomic>
 #include <thread>
 #include <cassert>
 
+template <typename Session>
 class DBConnectionPool
 {
 private:
     struct Node
     {
-        Node(const std::string& db_config) : session(soci::mysql, db_config), next{nullptr} {}
-        soci::session session;
+        template <typename... SessionArgs>
+        Node(SessionArgs&&... args) : session(std::forward<SessionArgs>(args)...), next{nullptr} {}
+        Session session;
         Node* next;
     };
 
@@ -45,7 +48,9 @@ private:
    
     std::atomic<TaggedStateReference> top_;  
 
-    DBConnectionPool(size_t size, const std::string& db_config)
+public:
+    template <typename... NodeArgs>
+    DBConnectionPool(size_t size, NodeArgs&&... args) //const std::string& db_config)
     {
         if(!size) return;
        
@@ -54,7 +59,7 @@ private:
         for(size_t i = 0; i < size; ++i)
         {
             Node* prev_top = top;
-            top = new Node{db_config};
+            top = new Node{std::forward<NodeArgs>(args)...};
             top->next = prev_top;
         }
 
@@ -102,11 +107,55 @@ private:
                 return std::unique_ptr<Node, ConnectionDeleter>(old_tagged_top.node, ConnectionDeleter{this});
         }
     }
+};
+
+inline auto get_mysql_connection(bool strong = true)
+{
+    static DBConnectionPool<soci::session> pool{std::thread::hardware_concurrency(), 
+        soci::mysql,
+        "db=pocket_monster_db user=root pass=lucklove"};
+    return pool.get(strong);    
+}
+
+struct RedisSession
+{
+private:
+    redox::Redox rdx_; 
 
 public:
-    static std::unique_ptr<Node, ConnectionDeleter> get_connection(bool strong = true)
+    RedisSession(const std::string& host, short port)
     {
-        static DBConnectionPool pool{std::thread::hardware_concurrency(), "db=pocket_monster_db user=root pass=lucklove"};
-        return pool.get(strong);    
+        if(!rdx_.connect(host, port))
+            throw std::runtime_error{"connect to redis server failed"};
+    }
+
+    ~RedisSession() noexcept(noexcept(rdx_.disconnect()))
+    {
+        rdx_.disconnect();
+    }
+
+    template <typename... Args>
+    auto get(Args&&... args) -> decltype(rdx_.get(std::forward<Args>(args)...))
+    {
+        return rdx_.get(std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    auto set(Args&&... args) -> decltype(rdx_.set(std::forward<Args>(args)...))
+    {
+        return rdx_.set(std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    auto del(Args&&... args) -> decltype(rdx_.del(std::forward<Args>(args)...))
+    {
+        return rdx_.del(std::forward<Args>(args)...);
     }
 };
+
+inline auto get_redis_connection(bool strong = true)
+{
+    static DBConnectionPool<RedisSession> pool{std::thread::hardware_concurrency(), "localhost", 6379};
+
+    return pool.get(strong);
+}

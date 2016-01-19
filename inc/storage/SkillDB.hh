@@ -46,8 +46,7 @@ struct SkillPersistentStorage
     {
         Skill s = { 0 };
 
-        auto connection = DBConnectionPool::get_connection();
-        connection->session << "select * from skill where id=:ID", soci::into(s), soci::use(id);
+        get_mysql_connection()->session << "select * from skill where id=:ID", soci::into(s), soci::use(id);
 
         if(s.id != 0)
         { 
