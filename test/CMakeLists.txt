@@ -6,6 +6,7 @@ SET(TEST_SOURCES
     aioi_db.cc
     cereal.cc
     monster_memory_test.cc
+    lock_free_stack.cc
     ../src/script/ClassRegister.cc
     ../src/script/FunctionRegister.cc
 )
@@ -35,6 +36,7 @@ SET(LINK_LIBS
     soci_mysql
     lua
     atomic
+    pthread
 )
 
 INCLUDE_DIRECTORIES(
