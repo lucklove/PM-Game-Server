@@ -4,17 +4,17 @@
 
 TEST_CASE(lock_free_stack_single_thread)
 {
-    LockFreeStack<int> s;
-    s.push(1);
-    s.push(2);
+    LockFreeStack<std::string> s;
+    s.push("hello");
+    s.push("world");
 
     auto x = s.pop();
     TEST_REQUIRE(x);
-    TEST_CHECK(*x == 2);
+    TEST_CHECK(*x == "world");
 
     x = s.pop();
     TEST_REQUIRE(x);
-    TEST_CHECK(*x == 1);
+    TEST_CHECK(*x == "hello");
 
     x = s.pop();
     TEST_CHECK(!x);
@@ -59,4 +59,40 @@ TEST_CASE(multi_thread_sum)
     TEST_CHECK(!x);
 
     TEST_CHECK(sum == 49995000 * std::thread::hardware_concurrency());
+}
+
+TEST_CASE(poll)
+{
+    std::atomic<size_t> sum{0};
+    LockFreeStack<size_t> stk;
+    std::vector<std::thread> consumers;
+    std::vector<std::thread> productors;
+        
+    std::cout << "poll test, if blocked, interrupt test please" << std::endl;
+
+    for(size_t i = 0; i < std::thread::hardware_concurrency(); ++i)
+    {
+        consumers.push_back(std::thread([&]
+        {
+            while(sum.load(std::memory_order_acquire) != 49995000 * std::thread::hardware_concurrency())
+            {
+                auto v = stk.pop();
+                if(v) sum += *v; 
+            }   
+        }));
+    
+        productors.push_back(std::thread([&]
+        {
+            for(size_t i = 0; i < 10000; ++i)
+                stk.push(i);
+        }));
+    }
+
+    for(auto& t : consumers)
+        t.join();
+
+    for(auto& t : productors)
+        t.join();
+
+    std::cout << "poll test end" << std::endl;
 }

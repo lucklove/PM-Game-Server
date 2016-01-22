@@ -26,7 +26,7 @@ private:
     {
         while(true)
         {
-            TaggedStateReference old_top = top.load(); 
+            TaggedStateReference old_top = top.load(std::memory_order_acquire); 
             node->next = old_top.node;
             TaggedStateReference new_top{node, old_top.version + 1};
             if(top.compare_exchange_weak(old_top, new_top))
@@ -38,7 +38,7 @@ private:
     {
         while(true)
         {
-            TaggedStateReference old_top = top.load();
+            TaggedStateReference old_top = top.load(std::memory_order_acquire);
 
             if(old_top.node == nullptr)
                 return nullptr;
@@ -59,8 +59,9 @@ private:
         return pop_top(trash_);
     }
 
-    void release(Node* node)
+    void release(std::atomic<TaggedStateReference>& top)
     {
+        Node* node = top.load(std::memory_order_acquire).node;
         while(node)
         {
             Node* prev = node;
@@ -68,6 +69,22 @@ private:
             delete prev;
         }
     }
+
+    template <typename T, typename = typename std::enable_if<std::is_same<DataT, typename std::decay<T>::type>::value>::type>
+    void do_push(T&& data)
+    {
+        Node* node = pick_trash();
+        if(node)
+        {
+            node->data = std::forward<T>(data);
+        }
+        else
+        {
+            node = new Node{std::forward<T>(data), nullptr};
+        }
+        push_top(top_, node);
+    }
+
 
 public:
     LockFreeStack() 
@@ -80,38 +97,18 @@ public:
 
     ~LockFreeStack() noexcept(noexcept(std::declval<DataT>().~DataT()))
     {
-        TaggedStateReference tagged_top_ref = top_;
-        TaggedStateReference tagged_trash_ref = trash_;
-        release(tagged_top_ref.node);
-        release(tagged_trash_ref.node);
+        release(top_);
+        release(trash_);
     }
 
     void push(const DataT& data)
     {
-        Node* node = pick_trash();
-        if(node)
-        {
-            node->data = data;
-        }
-        else
-        {
-            node = new Node{data, nullptr};
-        }
-        push_top(top_, node);
+        do_push(data);
     }
 
     void push(DataT&& data)
     {
-        Node* node = pick_trash();
-        if(node)
-        {
-            node->data = std::move(data);
-        }
-        else
-        {
-            node = new Node{std::move(data), nullptr};
-        }
-        push_top(top_, node);
+        do_push(std::move(data));
     }
 
     Optional<DataT> pop()

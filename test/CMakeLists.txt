@@ -7,6 +7,7 @@ SET(TEST_SOURCES
     cereal.cc
     monster_memory_test.cc
     lock_free_stack.cc
+    lock_free_queue.cc
     ../src/script/ClassRegister.cc
     ../src/script/FunctionRegister.cc
 )
