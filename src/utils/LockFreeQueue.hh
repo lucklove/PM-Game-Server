@@ -38,25 +38,24 @@ private:
 
     void push_tail(std::atomic<TaggedStateReference>& tail, Node* node)
     {
-        node->next.store({nullptr, 0}, std::memory_order_release);
-
+        node->next.store({nullptr, node->next.load(std::memory_order_relaxed).version}, std::memory_order_relaxed);
         while(true)
         {
             TaggedStateReference old_tail = tail.load(std::memory_order_acquire);
-            TaggedStateReference next = old_tail.node->next.load(std::memory_order_acquire);
+            TaggedStateReference tail_next = old_tail.node->next.load(std::memory_order_acquire);
             if(old_tail != tail.load(std::memory_order_acquire))    /**< 保证在取next时tail没有改变 */
                 continue;
  
-            if(next.node)
+            if(tail_next.node)
             {
-                TaggedStateReference new_tail{next.node, old_tail.version + 1};
+                TaggedStateReference new_tail{tail_next.node, old_tail.version + 1};
                 tail.compare_exchange_strong(old_tail, new_tail);
                 continue;
             }
             else
             {
-                TaggedStateReference new_next{node, next.version + 1};
-                if(old_tail.node->next.compare_exchange_weak(next, new_next))
+                TaggedStateReference new_tail_next{node, tail_next.version + 1};
+                if(old_tail.node->next.compare_exchange_weak(tail_next, new_tail_next))
                 {
                     TaggedStateReference new_tail{node, old_tail.version + 1};
                     tail.compare_exchange_strong(old_tail, new_tail);
@@ -91,11 +90,13 @@ private:
             if(head.compare_exchange_weak(old_head, new_head))
             {
                 old_head.node->data = data;
+//                old_head.node->next = {nullptr, old_head.node->next.load().version};
                 return old_head.node;
             }
         }
     }
-   
+  
+  
     void throw_trash(Node* node)
     {
         push_tail(trash_tail_, node);
@@ -137,17 +138,16 @@ private:
         push_tail(tail_, node);
     }
 
-
 public:
     LockFreeQueue()
     {
         Node* dummy = new Node{nullptr};
-        head_ = {dummy, 0};
-        tail_ = {dummy, 0};
+        head_.store({dummy, 0}, std::memory_order_release);
+        tail_.store({dummy, 0}, std::memory_order_release);
 
         dummy = new Node{nullptr};
-        trash_head_ = {dummy, 0};
-        trash_tail_ = {dummy, 0};
+        trash_head_.store({dummy, 0}, std::memory_order_release);
+        trash_tail_.store({dummy, 0}, std::memory_order_release);
     }
 
     ~LockFreeQueue() noexcept(noexcept(std::declval<DataT>().~DataT()))
@@ -175,7 +175,7 @@ public:
             {
                 throw_trash(node);
             });
-
+        
             return Optional<DataT>{std::move(*node->data)};
         }
         else

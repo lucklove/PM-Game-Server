@@ -38,6 +38,7 @@ SET(LINK_LIBS
     lua
     atomic
     pthread
+    tcmalloc
 )
 
 INCLUDE_DIRECTORIES(

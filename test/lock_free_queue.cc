@@ -68,20 +68,24 @@ TEST_CASE(poll)
     LockFreeQueue<size_t> que;
     std::vector<std::thread> consumers;
     std::vector<std::thread> productors;
-    
-    std::cout << "poll test, if blocked, interrupt test please" << std::endl;
+   
+    std::cout << "poll lock free queue, if blocked, interrupt test please" << std::endl;
 
     for(size_t i = 0; i < std::thread::hardware_concurrency(); ++i)
     {
         consumers.push_back(std::thread([&]
         {
-            while(sum.load(std::memory_order_acquire) != 49995000 * std::thread::hardware_concurrency())
+            while(sum.load(std::memory_order_acquire) < 49995000 * std::thread::hardware_concurrency())
             {
                 auto v = que.pop();
-                if(v) sum += *v;
+                if(v) 
+                    sum += *v;
             }
         }));
-        
+    }
+
+    for(size_t i = 0; i < std::thread::hardware_concurrency(); ++i)
+    {   
         productors.push_back(std::thread([&]
         {
             for(size_t i = 0; i < 10000; ++i)
@@ -95,5 +99,64 @@ TEST_CASE(poll)
     for(auto& t : productors)
         t.join();
 
+    TEST_CHECK(sum == 49995000 * std::thread::hardware_concurrency());
+
     std::cout << "poll test end" << std::endl;
+}
+
+TEST_CASE(leak_check)
+{
+    static std::atomic<size_t> count{0};
+
+    struct T
+    {
+        T()
+        {
+            count += 1;
+        }
+
+        T(const T&)
+        {
+            count += 1;
+        }
+
+        ~T()
+        {
+            count -= 1;
+        }
+    };
+
+    {
+        LockFreeQueue<T> que;
+        std::vector<std::thread> consumers;
+        std::vector<std::thread> productors;
+
+        for(size_t i = 0; i < std::thread::hardware_concurrency(); ++i)
+        {   
+            productors.push_back(std::thread([&]
+            {
+                for(size_t i = 0; i < 5; ++i)
+                    que.push(T{});
+            }));
+        }
+
+        for(size_t i = 0; i < std::thread::hardware_concurrency(); ++i)
+        {
+            consumers.push_back(std::thread([&]
+            {
+                Optional<T> opt;
+                while((opt = que.pop()))
+                {
+                }
+            }));
+        }
+
+        for(auto& t : consumers)
+            t.join();
+
+        for(auto& t : productors)
+            t.join();
+    }
+
+    TEST_CHECK(count == 0);    
 }

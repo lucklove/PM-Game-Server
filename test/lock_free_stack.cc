@@ -2,6 +2,15 @@
 #include "utils/LockFreeStack.hh"
 #include <thread>
 
+TEST_CASE(store_uncopyable)
+{
+    LockFreeStack<std::unique_ptr<int>> s;
+    s.push(nullptr);
+    auto v = s.pop();
+    TEST_REQUIRE(v);
+    TEST_CHECK(*v == nullptr);
+}
+
 TEST_CASE(lock_free_stack_single_thread)
 {
     LockFreeStack<std::string> s;
@@ -68,7 +77,7 @@ TEST_CASE(poll)
     std::vector<std::thread> consumers;
     std::vector<std::thread> productors;
         
-    std::cout << "poll test, if blocked, interrupt test please" << std::endl;
+    std::cout << "poll lock free stack, if blocked, interrupt test please" << std::endl;
 
     for(size_t i = 0; i < std::thread::hardware_concurrency(); ++i)
     {
@@ -95,4 +104,61 @@ TEST_CASE(poll)
         t.join();
 
     std::cout << "poll test end" << std::endl;
+}
+
+TEST_CASE(leak_check)
+{
+    static std::atomic<size_t> count{0};
+
+    struct T
+    {
+        T()
+        {
+            count += 1;
+        }
+
+        T(const T&)
+        {
+            count += 1;
+        }
+
+        ~T()
+        {
+            count -= 1;
+        }
+    };
+
+    {
+        LockFreeStack<T> stk;
+        std::vector<std::thread> consumers;
+        std::vector<std::thread> productors;
+
+        for(size_t i = 0; i < std::thread::hardware_concurrency(); ++i)
+        {   
+            productors.push_back(std::thread([&]
+            {
+                for(size_t i = 0; i < 5; ++i)
+                    stk.push(T{});
+            }));
+        }
+
+        for(size_t i = 0; i < std::thread::hardware_concurrency(); ++i)
+        {
+            consumers.push_back(std::thread([&]
+            {
+                Optional<T> opt;
+                while((opt = stk.pop()))
+                {
+                }
+            }));
+        }
+
+        for(auto& t : consumers)
+            t.join();
+
+        for(auto& t : productors)
+            t.join();
+    }
+
+    TEST_CHECK(count == 0);    
 }
