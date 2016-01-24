@@ -9,6 +9,7 @@ SET(TEST_SOURCES
     lock_free_stack.cc
     lock_free_queue.cc
     dispatcher.cc
+    thread_pool.cc
     ../src/script/ClassRegister.cc
     ../src/script/FunctionRegister.cc
 )

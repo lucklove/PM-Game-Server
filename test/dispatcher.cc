@@ -29,5 +29,5 @@ TEST_CASE(dispatcher)
     });
     
     while(!(tsk1_ok && tsk2_ok))
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(0));
 }

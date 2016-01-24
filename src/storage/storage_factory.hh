@@ -2,18 +2,37 @@
 #include "Storage.hh"
 #include "DBConnectionPool.hh"
 #include "utils/ScopeGuard.hh"
+#include "dispatcher/Dispatcher.hh"
 #include <unordered_map>
-#include <mutex>
+#include <atomic>
 
 template <typename T>
 struct MemoryStorage
 {
 private:
-    static std::mutex& storage_lock()
+    static std::atomic_flag& storage_lock()
     {
-        static std::mutex lock;
+        static std::atomic_flag lock = ATOMIC_FLAG_INIT;
         return lock;
     }
+
+    struct LockGuard
+    {
+    public:
+        LockGuard(std::atomic_flag& lock) : lock_{lock}
+        {
+            while(lock_.test_and_set())
+                Dispatcher::getInstance().yield();
+        }
+
+        ~LockGuard()
+        {
+            lock_.clear();
+        }
+
+    private:
+        std::atomic_flag& lock_;
+    };
 
     static std::unordered_map<int, T>& static_storage()
     {
@@ -25,7 +44,7 @@ public:
     static Optional<T> get(int id)
     {
         auto& db = static_storage();
-        std::lock_guard<std::mutex> lck(storage_lock());
+        LockGuard lck(storage_lock());
         auto ptr = db.find(id);
         if(ptr == db.end())
             return {};
@@ -35,7 +54,7 @@ public:
     static void set(int id, const T& item)
     {
         auto& db = static_storage();
-        std::lock_guard<std::mutex> lck(storage_lock());
+        LockGuard lck(storage_lock());
         db.erase(id);
         db.insert({id, item});
     }
@@ -43,7 +62,7 @@ public:
     static void del(int id)
     {
         auto& db = static_storage();
-        std::lock_guard<std::mutex> lck(storage_lock());
+        LockGuard lck(storage_lock());
         db.erase(id);
     }
 };
