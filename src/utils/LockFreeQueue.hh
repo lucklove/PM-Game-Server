@@ -123,7 +123,7 @@ private:
         }
     }
 
-    template <typename T, typename = typename std::enable_if<std::is_same<DataT, typename std::decay<T>::type>::value>::type>
+    template <typename T>
     void do_push(T&& data)
     {
         Node* node = pick_trash();
@@ -182,5 +182,18 @@ public:
         {
             return {};
         }
-    }    
+    } 
+
+    bool empty()
+    {
+        while(true)
+        {
+            TaggedStateReference old_head = head_.load(std::memory_order_acquire);
+            TaggedStateReference head_next = old_head.node->next.load(std::memory_order_acquire);
+            if(old_head != head_.load(std::memory_order_acquire))    /**< 保证取head_next时head没有改变 */
+                continue;
+
+            return head_next.node == nullptr;
+        }
+    } 
 };
