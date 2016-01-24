@@ -2,48 +2,75 @@
 #include "script/Lua.hh"
 #include "result/Result.hh"
 #include "exception/LuaException.hh"
+#include "dispatcher/Dispatcher.hh"
 
-static auto handle_battle_initiate(int role_id, int enemy_id)
+static void handle_battle_initiate(const crow::request& req, crow::response& res, int role_id, int enemy_id)
 {
-    crow::json::wvalue res;
-
-    try
-    {    
-        Result result{res};
-        Lua::context()["handleBattle"](result, role_id, enemy_id);
-    }
-    catch(LuaException& e)
+    Dispatcher::getInstance().enqueue([req, &res, role_id, enemy_id]
     {
-        res["error"] = e.what();
-    }
+        crow::json::wvalue r;
 
-    return res;
+        try
+        {    
+            Result result{r};
+            (*Lua::context())["handleBattle"](result, role_id, enemy_id);
+        }
+        catch(LuaException& e)
+        {
+            r["error"] = e.what();
+        }
+        catch(std::exception& e)
+        {
+            res = crow::response(500);
+            res.write(e.what());
+            res.end();
+            return;
+        }
+
+        res.write(crow::json::dump(r));
+        res.end();
+    });
 }
 
-static auto handle_attack(const crow::request& req, int battle_id)
+static void handle_attack(const crow::request& req, crow::response& res, int battle_id)
 {
-    auto x = crow::json::load(req.body);
-    if(!x) return crow::response(400);
-    crow::json::wvalue res;
-
-    try
+    Dispatcher::getInstance().enqueue([req, &res, battle_id]
     {
-        Result result{res};
-        int skill_id = x["skill"].i();
-        Lua::context()["handleAttack"](result, battle_id, skill_id);
-    }
-    catch(LuaException& e)
-    {
-        res["error"] = e.what();
-    }
+        crow::json::wvalue r;
 
-    return crow::response{res};
+        try
+        {
+            auto x = crow::json::load(req.body);
+            if(!x)
+            {
+                res = crow::response(400);
+                return;
+            }
+
+            Result result{r};
+            int skill_id = x["skill"].i();
+            (*Lua::context())["handleAttack"](result, battle_id, skill_id);
+        }
+        catch(LuaException& e)
+        {
+            r["error"] = e.what();
+        }
+        catch(std::exception& e)
+        {
+            res = crow::response(500);
+            res.write(e.what());
+            res.end();
+            return;
+        }
+
+        res.write(crow::json::dump(r));
+        res.end();
+    });
 }
-
 int main()
 {
     /** 测试lua环境是否正常 */
-    Lua::context().load("src/script/test.lua");
+    Lua::context()->load("src/script/test.lua");
 
     crow::SimpleApp app;
 

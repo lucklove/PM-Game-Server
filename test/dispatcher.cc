@@ -3,7 +3,7 @@
 
 TEST_CASE(dispatcher)
 {
-    Dispatcher<2, 2> dispatcher;
+    Dispatcher& dispatcher = Dispatcher::getInstance();
 
     bool tsk1_ok = false;
     bool tsk2_ok = false;

@@ -11,4 +11,4 @@ INCLUDE_DIRECTORIES(
 )
 LINK_DIRECTORIES(/usr/local/lib64)
 ADD_EXECUTABLE(pm_server ${POCKET_MONSTER_SRCS})
-TARGET_LINK_LIBRARIES(pm_server boost_system pthread redox ev hiredis soci_core soci_mysql lua atomic)
+TARGET_LINK_LIBRARIES(pm_server boost_system pthread redox ev hiredis soci_core soci_mysql lua atomic boost_coroutine)

@@ -6,10 +6,8 @@
 #include "utils/LockFreeQueue.hh"
 #include "utils/LockFreeStack.hh"
 
-template <size_t thread_num, size_t coro_num>
 class Dispatcher
 {
-    static_assert(thread_num <= coro_num, "worker threads can not be more than coroutines number.");
 private:
     typedef boost::coroutines::asymmetric_coroutine<bool>::pull_type pull_coro_t;
     typedef boost::coroutines::asymmetric_coroutine<bool>::push_type push_coro_t;
@@ -20,9 +18,7 @@ private:
     std::vector<std::thread> workers_;
     bool stopped_;
 
-public:
-
-    Dispatcher() : stopped_{false}
+    Dispatcher(size_t thread_num, size_t coro_num) : stopped_{false}
     {
         for(size_t i = 0; i < coro_num; ++i)
         {
@@ -90,6 +86,21 @@ public:
         for(auto& worker : workers_)
             worker.join();
     }
+
+    push_coro_t* pusher(push_coro_t* p = nullptr)
+    {
+        thread_local push_coro_t* saved_pusher = nullptr;
+        if(p) saved_pusher = p;
+        assert(saved_pusher && "no specificed pusher");
+        return saved_pusher;
+    }
+
+public:
+    static Dispatcher& getInstance()
+    {
+        static Dispatcher dispatcher{std::thread::hardware_concurrency(), 1000};
+        return dispatcher;
+    }
  
     void yield(bool suspend = false)
     {
@@ -100,14 +111,6 @@ public:
         });
 
         (*saved_pusher)(suspend);
-    }
-
-    push_coro_t* pusher(push_coro_t* p = nullptr)
-    {
-        thread_local push_coro_t* saved_pusher = nullptr;
-        if(p) saved_pusher = p;
-        assert(saved_pusher && "no specificed pusher");
-        return saved_pusher;
     }
 
     void enqueue(std::function<void()> tsk)
