@@ -1,6 +1,6 @@
 #pragma once
 #include "Storage.hh"
-#include "DBConnectionPool.hh"
+#include "DBAccess.hh"
 #include "utils/ScopeGuard.hh"
 #include "dispatcher/Dispatcher.hh"
 #include <unordered_map>
@@ -75,7 +75,13 @@ struct CacheStorage
         try
         {
             Optional<T> item_opt;
-            std::string s = get_redis_connection()->session.get(filed + ":" + std::to_string(id));
+            std::string s;
+
+            DBAccess::redis_query([&filed, &s, id](redox::Redox& session)
+            {
+                s = session.get(filed + ":" + std::to_string(id));
+            });
+
             T item;
             std::stringstream ss{s};
             item.from_stream(ss);
@@ -91,11 +97,17 @@ struct CacheStorage
     {
         std::stringstream ss;
         item.to_stream(ss);
-        get_redis_connection()->session.set(filed + ":" + std::to_string(id), ss.str());
+        DBAccess::redis_query([&ss, &filed, id](redox::Redox& session)
+        {
+            session.set(filed + ":" + std::to_string(id), ss.str());
+        });
     }
 
     static void del(const std::string& filed, int id)
     {
-        get_redis_connection()->session.del(filed + ":" + std::to_string(id));
+        DBAccess::redis_query([&filed, id](redox::Redox& session)
+        {
+            session.del(filed + ":" + std::to_string(id));
+        });
     }
 };

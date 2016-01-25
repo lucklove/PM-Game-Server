@@ -93,13 +93,16 @@ public:
         trash_ = {nullptr, 0};
     }
 
-    LockFreeStack(const LockFreeStack&) = delete;
-
     ~LockFreeStack() noexcept(noexcept(std::declval<DataT>().~DataT()))
     {
         release(top_);
         release(trash_);
     }
+
+    LockFreeStack(const LockFreeStack&) = delete;
+    LockFreeStack(LockFreeStack&&) = delete;
+    LockFreeStack& operator=(const LockFreeStack&) = delete;
+    LockFreeStack& operator=(LockFreeStack&&) = delete;
 
     void push(const DataT& data)
     {

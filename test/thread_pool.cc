@@ -34,12 +34,10 @@ TEST_CASE(enter_exit)
             exit_flag = true;
         }); 
         pool.enqueue([&]
-        {   
+        {
             exec_flag = true;    
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }); 
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     TEST_CHECK(exec_flag);
     TEST_CHECK(enter_flag);
     TEST_CHECK(exit_flag);

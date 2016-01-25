@@ -14,6 +14,7 @@ private:
 
 public:
     ThreadPool(size_t size, std::function<void()> on_enter = {}, std::function<void()> on_exit = {})
+        : stopped_{false}
     {
         for(size_t i = 0; i < size; ++i)
         {
@@ -80,7 +81,6 @@ public:
         auto tsk = std::make_shared<std::packaged_task<typename std::result_of<F(Params...)>::type()>>(
             std::bind(std::forward<F>(func), std::forward<Params>(params)...));
         auto res = tsk->get_future();
-
         tasks_.push([tsk]
         {
             (*tsk)();

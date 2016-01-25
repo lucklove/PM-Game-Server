@@ -70,7 +70,7 @@ static void handle_attack(const crow::request& req, crow::response& res, int bat
 int main()
 {
     /** 测试lua环境是否正常 */
-    Lua::context()->load("src/script/test.lua");
+//    Lua::context()->load("src/script/test.lua");
 
     crow::SimpleApp app;
 

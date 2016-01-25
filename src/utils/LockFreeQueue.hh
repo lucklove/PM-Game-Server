@@ -90,7 +90,6 @@ private:
             if(head.compare_exchange_weak(old_head, new_head))
             {
                 old_head.node->data = data;
-//                old_head.node->next = {nullptr, old_head.node->next.load().version};
                 return old_head.node;
             }
         }
@@ -155,6 +154,11 @@ public:
         release(head_);
         release(trash_head_);
     }
+
+    LockFreeQueue(const LockFreeQueue&) = delete;
+    LockFreeQueue(LockFreeQueue&&) = delete;
+    LockFreeQueue& operator=(const LockFreeQueue&) = delete;
+    LockFreeQueue& operator=(LockFreeQueue&&) = delete;
 
     void push(const DataT& data)
     {
