@@ -7,13 +7,15 @@ TEST_CASE(dispatcher)
 
     bool tsk1_ok = false;
     bool tsk2_ok = false;
+    size_t odd_count = 0;
+    size_t even_count = 0;
 
     dispatcher.enqueue([&]
     {
         for(size_t i = 0; i < 1000; i += 2)
         {
-            std::cout << i << std::endl;
-                dispatcher.yield();
+            ++even_count;
+            dispatcher.yield();
         }
         tsk1_ok = true;
     });
@@ -22,12 +24,15 @@ TEST_CASE(dispatcher)
     {
         for(size_t i = 1; i < 1000; i += 2)
         {
-            std::cout << i << std::endl;
-                dispatcher.yield();
+            ++odd_count;
+            dispatcher.yield();
         }
         tsk2_ok = true;
     });
     
     while(!(tsk1_ok && tsk2_ok))
         std::this_thread::sleep_for(std::chrono::milliseconds(0));
+    
+    TEST_CHECK(odd_count == 500);
+    TEST_CHECK(even_count == 500);
 }

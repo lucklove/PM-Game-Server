@@ -55,6 +55,7 @@ private:
                         if(!co) co = work_coros_.pop();
                         if(!co)
                         {
+                            /** XXX: is there any better way to give up CPU? */
                             std::this_thread::sleep_for(std::chrono::milliseconds(100));
                             continue;
                         }

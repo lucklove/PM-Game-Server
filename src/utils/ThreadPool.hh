@@ -32,6 +32,7 @@ public:
                         }
                         else
                         {
+                            /** XXX: is there any better way to give up CPU? */
                             std::this_thread::sleep_for(std::chrono::milliseconds(100));
                         }
                     }
