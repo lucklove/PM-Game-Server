@@ -14,6 +14,7 @@ function init_monster_attr(m)
     m:set_round_ability(0)
     m:set_crit_multi(1)
     m:set_mod_dodge(1)
+    m:set_debuff_cur(0)
 end
 
 
@@ -101,8 +102,34 @@ function change_attr_by_skill(m, s)
     update_monster_attr(m)
 end
 
+function before_attack(m, s)
+    if(m:ability() == 2007 and s:type() == 5) then      --蓄电  电系技能威力提升15% 
+        m:set_mod_dmg_ability(1.15)
+    elseif(m:ability() == 2008 and s:type() == 3) then  --贮水  水系技能威力提升15% 
+        m:set_mod_dmg_ability(1.15)
+    elseif(m:ability() == 2009 and s:type() == 2) then  --赤焰  火系技能威力提升15% 
+        m:set_mod_dmg_ability(1.15)
+    elseif(m:ability() == 2010 and s:type() == 4) then  --叶绿素    草系技能威力提升20% 
+        m:set_mod_dmg_ability(1.2)
+    elseif(m:ability() == 2011 and s:type() == 1) then  --单纯  普系技能威力提升15% 
+        m:set_mod_dmg_ability(1.15)
+    elseif(m:ability() == 2012 and s:type() == 8) then  --毒气  毒系技能威力提升20% 
+        m:set_mod_dmg_ability(1.2)
+    elseif(m:ability() == 2013 and s:type() == 10) then --强羽  飞系技能威力提升15% 
+        m:set_mod_dmg_ability(1.15)
+    elseif(m:ability() == 2014 and s:type() == 12) then --虫之力    虫系技能威力提升20% 
+        m:set_mod_dmg_ability(1.2)
+    elseif(m:ability() == 2015 and s:type() == 13) then --坚岩  岩系技能威力提升15% 
+        m:set_mod_dmg_ability(1.15)
+    else 
+        m:set_mod_dmg_ability(1)
+    end
+end
+
 --计算一个PM通过特定技能攻击另一个PM时造成的伤害
 function monster_attack(res_a, res_b, monster_a, monster_b, skill)
+    before_attack(monster_a, skill)
+
     if(not is_hit(monster_a, monster_b, skill)) then
         res_a:setb("hit", false)
         return
