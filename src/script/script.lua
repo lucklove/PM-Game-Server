@@ -73,25 +73,27 @@ function is_hit(m_a, m_b, s)
     return math.random(0, 100) <= acc_final
 end
 
+--属性等级范围限制
+function lv_limit(num)
+    if(num > 6) then
+        return 6
+    end
+    if(num < -6) then
+        return -6
+    end
+    return num;
+end
+    
 --技能导致能力变化
 function change_attr_by_skill(m, s)
-    local limit = function(num)
-        if(num > 6) then
-            return 6
-        end
-        if(num < -6) then
-            return -6
-        end
-        return num;
-    end
     local attrs = {
-        [1] = function() m:set_atk_lv(limit(m:atk_lv() + s:lvl_attr())) end,
-        [2] = function() m:set_def_lv(limit(m:def_lv() + s:lvl_attr())) end,
-        [3] = function() m:set_satk_lv(limit(m:satk_lv() + s:lvl_attr())) end,
-        [4] = function() m:set_sdef_lv(limit(m:dsef_lv() + s:lvl_attr())) end,
-        [5] = function() m:set_spd_lv(limit(m:spd_lv() + s:lvl_attr())) end,
-        [6] = function() m:set_acc_lv(limit(m:acc_lv() + s:lvl_attr())) end,
-        [7] = function() m:set_crit_lv(limit(m:crit_lv() + s:lvl_attr())) end,
+        [1] = function() m:set_atk_lv(lv_limit(m:atk_lv() + s:lvl_attr())) end,
+        [2] = function() m:set_def_lv(lv_limit(m:def_lv() + s:lvl_attr())) end,
+        [3] = function() m:set_satk_lv(lv_limit(m:satk_lv() + s:lvl_attr())) end,
+        [4] = function() m:set_sdef_lv(lv_limit(m:dsef_lv() + s:lvl_attr())) end,
+        [5] = function() m:set_spd_lv(lv_limit(m:spd_lv() + s:lvl_attr())) end,
+        [6] = function() m:set_acc_lv(lv_limit(m:acc_lv() + s:lvl_attr())) end,
+        [7] = function() m:set_crit_lv(lv_limit(m:crit_lv() + s:lvl_attr())) end,
     }
    
     if(s:attr() < 1 or s:attr() > 7) then
@@ -126,8 +128,32 @@ function before_attack(m, s)
     end
 end
 
+function after_attack(m, s, h)
+    if(m:ability() == 2016 and s:type() == 9) then      --浮游  受到地面系伤害减少50%
+        return h * 0.5
+    elseif(m:ability() == 2017 and s:type() == 5) then  --避雷针    受到电系伤害减少50% 
+        return h * 0.5
+    elseif(m:ability() == 2018 and s:type() == 6) then  --厚脂肪    受到的冰系伤害减少50%   
+        return h * 0.5
+    elseif(m:ability() == 2019 and s:type() == 2) then  --耐热  受到的火系伤害减少50%   
+        return h * 0.5
+    elseif(m:ability() == 2020 and s:type() == 3) then  --吸水  受到的水系伤害减少50%   
+        return h * 0.5
+    elseif(m:ability() == 2021 and s:type() == 16) then --正义之心  受到恶系技能攻击时，攻击等级提高1级
+        m:set_atk_lv(lv_limit(m:atk_lv() + 1))
+        return h 
+    elseif(m:ability() == 2022 and s:type() == 11) then --呆滞  受到超系技能攻击时，防御与特防提升1级 
+        m:set_def_lv(lv_limit(m:def_lv() + 1))
+        m:set_sdef_lv(lv_limit(m:sdef_lv() + 1))
+        return h
+    else
+        return h
+    end 
+end
+
 --计算一个PM通过特定技能攻击另一个PM时造成的伤害
 function monster_attack(res_a, res_b, monster_a, monster_b, skill)
+    --伤害前技能判定
     before_attack(monster_a, skill)
 
     if(not is_hit(monster_a, monster_b, skill)) then
@@ -161,6 +187,9 @@ function monster_attack(res_a, res_b, monster_a, monster_b, skill)
     ) * math.random(217, 255) / 255.0 * (1 + multi) * (1 + is_same_type * monster_a:mod_type_value())
     * mod_type_aioi * monster_a:mod_dmg_ability() + skill:fixdmg();
 
+    --伤害公式后技能特性判定
+    hurt = after_attack(monster_b, skill, hurt)
+    
     --执行实际的伤害
     res_a:setn("hurt", hurt)
     monster_b:set_cur_hp(math.ceil(monster_b:cur_hp() - hurt))
