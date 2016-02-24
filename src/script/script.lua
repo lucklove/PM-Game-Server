@@ -242,7 +242,19 @@ function monster_attack(res_a, res_b, monster_a, monster_b, skill)
     
     if(math.random(0, 100) < skill:rate_debuff() and pm:debuff_cur() == 0) then
         pm:set_debuff_cur(skill:debuff())    
-        pm:set_debuff_round(skill:round() + pm:round_ability())    
+        pm:set_debuff_round(skill:round() + pm:round_ability())
+ 
+        --异常判定后的特性判定
+        if(pm:ability() == 2028) then                       --根性  处于异常状态时暴击等级+2    
+            pm:set_crit_lv(lv_limit(pm:crit_lv() + 2))
+        elseif(pm:ability() == 2029) then                   --神秘鳞片  处于异常状态时防御与特防等级+1  
+            pm:set_def_lv(lv_limit(pm:def_lv() + 1))
+            pm:set_sdef_lv(lv_limit(pm:sdef_lv() + 1))
+        elseif(pm:ability() == 2030) then                   --蹒跚    异常状态下命中等级+2    
+            pm:set_acc_lv(lv_limit(m:acc_lv() + 2))
+        elseif(pm:ability() == 2031) then                   --电引擎    异常状态下速度等级+2    
+            pm:set_spd_lv(lv_limit(m:spd_lv() + 2))
+        end
     end
 end
 
