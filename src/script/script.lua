@@ -87,13 +87,32 @@ end
 --技能导致能力变化
 function change_attr_by_skill(m, s)
     local attrs = {
-        [1] = function() m:set_atk_lv(lv_limit(m:atk_lv() + s:lvl_attr())) end,
-        [2] = function() m:set_def_lv(lv_limit(m:def_lv() + s:lvl_attr())) end,
-        [3] = function() m:set_satk_lv(lv_limit(m:satk_lv() + s:lvl_attr())) end,
-        [4] = function() m:set_sdef_lv(lv_limit(m:dsef_lv() + s:lvl_attr())) end,
-        [5] = function() m:set_spd_lv(lv_limit(m:spd_lv() + s:lvl_attr())) end,
-        [6] = function() m:set_acc_lv(lv_limit(m:acc_lv() + s:lvl_attr())) end,
-        [7] = function() m:set_crit_lv(lv_limit(m:crit_lv() + s:lvl_attr())) end,
+        [1] = function() 
+            if(m:ability() == 2025 and s:lvl_attr() < 0) then return end    --怪力钳    攻击等级不会被降低  
+            m:set_atk_lv(lv_limit(m:atk_lv() + s:lvl_attr())) 
+        end,
+        [2] = function() 
+            if(m:ability() == 2023 and s:lvl_attr() < 0) then return end    --胸甲  防御等级不会被降低  
+            m:set_def_lv(lv_limit(m:def_lv() + s:lvl_attr())) 
+        end,
+        [3] = function() 
+            if(m:ability() == 2026 and s:lvl_attr() < 0) then return end    --念力  特攻等级不会降低    
+            m:set_satk_lv(lv_limit(m:satk_lv() + s:lvl_attr())) 
+        end,
+        [4] = function() 
+            if(m:ability() == 2027 and s:lvl_attr() < 0) then return end    --顽固  特防等级不会降低    
+            m:set_sdef_lv(lv_limit(m:dsef_lv() + s:lvl_attr())) 
+        end,
+        [5] = function() 
+            m:set_spd_lv(lv_limit(m:spd_lv() + s:lvl_attr())) 
+        end,
+        [6] = function() 
+            if(m:ability() == 2024 and s:lvl_attr() < 0) then return end    --锐利目光  命中等级不会被降低  
+            m:set_acc_lv(lv_limit(m:acc_lv() + s:lvl_attr())) 
+        end,
+        [7] = function() 
+            m:set_crit_lv(lv_limit(m:crit_lv() + s:lvl_attr())) 
+        end,
     }
    
     if(s:attr() < 1 or s:attr() > 7) then
