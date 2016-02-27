@@ -142,6 +142,21 @@ function before_attack(m, s)
         m:set_mod_dmg_ability(1.2)
     elseif(m:ability() == 2015 and s:type() == 13) then --坚岩  岩系技能威力提升15% 
         m:set_mod_dmg_ability(1.15)
+    elseif(m:ability() == 2032 and s:type() == 4 and m:cur_hp() < full_hp(m) * 1 / 3) then  
+        --深绿  生命低于上限的1/3时，草系技能的威力提高50%  
+        m:set_mod_dmg_ability(1.5)
+    elseif(m:ability() ==  2033 and s:type() == 2 and m:cur_hp() < full_hp(m) * 1 / 3) then
+        --猛火  生命低于上限的1/3时，火系技能的威力提高50%  
+        m:set_mod_dmg_ability(1.5)
+    elseif(m:ability() == 2034 and s:type() == 3 and m:cur_hp() < full_hp(m) * 1 / 3) then
+        --激流  生命低于上限的1/3时，水系技能的威力提高50%  
+        m:set_mod_dmg_ability(1.5)
+    elseif(m:ability() == 2035 and s:type() == 12 and m:cur_hp() < full_hp(m) * 1 / 3) then 
+        --虫之预感  生命低于上限的1/3时，虫系技能的威力提高50%  
+        m:set_mod_dmg_ability(1.5)
+    elseif(m:ability() == 2036 and s:type() == 13 and m:cur_hp() < full_hp(m) * 1 / 3) then
+        --石脑  生命低于上限的1/3时，岩系技能的威力提高50%  
+        m:set_mod_dmg_ability(1.5)
     else 
         m:set_mod_dmg_ability(1)
     end
