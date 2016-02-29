@@ -186,11 +186,11 @@ function after_attack(m, s, h)
 end
 
 --计算一个PM通过特定技能攻击另一个PM时造成的伤害
-function monster_attack(res_a, res_b, monster_a, monster_b, skill)
+function monster_attack(res_a, res_b, monster_a, monster_b, skill_a, skill_b, is_first)
     --伤害前技能判定
-    before_attack(monster_a, skill)
+    before_attack(monster_a, skill_a)
 
-    if(not is_hit(monster_a, monster_b, skill)) then
+    if(not is_hit(monster_a, monster_b, skill_a)) then
         res_a:setb("hit", false)
         return
     end 
@@ -198,12 +198,12 @@ function monster_attack(res_a, res_b, monster_a, monster_b, skill)
     --计算伤害
     local multi = calculate_crit_multi(monster_a)
     local is_physical_skill = 0
-    if(skill:skill_class() == 1) then
+    if(skill_a:skill_class() == 1) then
         is_physical_skill = 1
     end
     
     local is_same_type = 0
-    if(monster_a:type1() == skill:type() or monster_a:type2() == skill:type()) then
+    if(monster_a:type1() == skill_a:type() or monster_a:type2() == skill_a:type()) then
         is_same_type = 1
     end
 
@@ -212,17 +212,34 @@ function monster_attack(res_a, res_b, monster_a, monster_b, skill)
         * get_aioi(monster_a:type2(), monster_b:type1())
         * get_aioi(monster_a:type2(), monster_b:type2())
 
+    if(monster_a:ability() == 2037 and skill_a:id() == skill_b:id()) then   --斗争心    技能类型与敌人相同时，伤害提高50%   
+        m:set_mod_dmg_ability(1.5)
+    elseif(monster_a:ability() == 2038 and skill_a:is_melee() == 1) then    --铁拳  用近程攻击的技能威力提高20% 
+        m:set_mod_dmg_ability(1.2)
+    elseif(monster_a:ability() == 2039 and not is_first) then               --分析  后攻时，技能威力提高30% 
+        m:set_mod_dmg_ability(1.3)
+    elseif(monster_a:ability() == 2040 and mod_type_aioi < 2) then          --有色眼镜  使用非属性相克的技能时，伤害提升20% 
+        m:set_mod_dmg_ability(1.2)
+    end
+
     local hurt =
     (
-        (monster_a:level() * 0.4 + 2) * skill:power()
+        (monster_a:level() * 0.4 + 2) * skill_a:power()
         * (monster_a:cur_atk() * is_physical_skill + monster_a:cur_satk() * (1 - is_physical_skill))
         / (monster_b:cur_def() * is_physical_skill + monster_b:cur_sdef() * (1 - is_physical_skill))
         / 50 + 2
     ) * math.random(217, 255) / 255.0 * (1 + multi) * (1 + is_same_type * monster_a:mod_type_value())
-    * mod_type_aioi * monster_a:mod_dmg_ability() + skill:fixdmg();
+    * mod_type_aioi * monster_a:mod_dmg_ability() + skill_a:fixdmg();
 
+    if(not multi == 1 and monster_b:ability() == 2041) then                 --战斗盔甲  免疫暴击伤害
+        hurt = 0
+    end
+    if(mod_type_aioi > 1 and monster_b:ability() == 2042) then              --危险预知  受到属性相克的伤害时，暴击等级+2    
+        monster_b:set_crit_lv(lv_limit(monster_b:crit_lv() + 2))
+    end
+    
     --伤害公式后技能特性判定
-    hurt = after_attack(monster_b, skill, hurt)
+    hurt = after_attack(monster_b, skill_a, hurt)
     
     --执行实际的伤害
     res_a:setn("hurt", hurt)
@@ -233,31 +250,31 @@ function monster_attack(res_a, res_b, monster_a, monster_b, skill)
     update_monster_attr(monster_b)
 
     --技能导致能力变化
-    if(math.random(0, 100) < skill:rate_attr()) then
-        if(skill:role_attr() == 0) then
+    if(math.random(0, 100) < skill_a:rate_attr()) then
+        if(skill_a:role_attr() == 0) then
             local attr = res_a:get("attr")
-            attr:seti("type", skill:attr());
-            attr:seti("value", skill:lvl_attr());
-            change_attr_by_skill(monster_a, skill)
+            attr:seti("type", skill_a:attr());
+            attr:seti("value", skill_a:lvl_attr());
+            change_attr_by_skill(monster_a, skill_a)
         else
             local attr = res_b:get("attr")
-            attr:seti("type", skill:attr())
-            attr:seti("value", skill:lvl_attr())
-            change_attr_by_skill(monster_b, skill)
+            attr:seti("type", skill_a:attr())
+            attr:seti("value", skill_a:lvl_attr())
+            change_attr_by_skill(monster_b, skill_a)
         end
     end
 
     --技能导致异常
     local pm
-    if(skill:role_debuff() == 0) then
+    if(skill_a:role_debuff() == 0) then
         pm = monster_a
     else
         pm = monster_b
     end
     
-    if(math.random(0, 100) < skill:rate_debuff() and pm:debuff_cur() == 0) then
-        pm:set_debuff_cur(skill:debuff())    
-        pm:set_debuff_round(skill:round() + pm:round_ability())
+    if(math.random(0, 100) < skill_a:rate_debuff() and pm:debuff_cur() == 0) then
+        pm:set_debuff_cur(skill_a:debuff())    
+        pm:set_debuff_round(skill_a:round() + pm:round_ability())
  
         --异常判定后的特性判定
         if(pm:ability() == 2028) then                       --根性  处于异常状态时暴击等级+2    
